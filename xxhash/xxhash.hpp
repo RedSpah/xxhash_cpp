@@ -495,7 +495,7 @@ namespace xxh
             const uint8_t* p = (const uint8_t*)input;
             const uint8_t* const bEnd = p + length;
 
-            if (input == NULL) return xxh::error_code::error;
+            if (!input) return xxh::error_code::error;
 
             total_len += length;
 
@@ -581,14 +581,14 @@ namespace xxh
             {
 
                 while (p + 8 <= bEnd) {
-                    const uint64_t k1 = detail::round<64>(0, mem_ops::readLE<64>(p, endian));
+                    const hash64_t k1 = detail::round<64>(0, mem_ops::readLE<64>(p, endian));
                     hash_ret ^= k1;
                     hash_ret = bit_ops::rotl<64>(hash_ret, 27) * detail::PRIME<64>(1) + detail::PRIME<64>(4);
                     p += 8;
                 }
 
                 if (p + 4 <= bEnd) {
-                    hash_ret ^= (U64)(mem_ops::readLE<32>(p, endian)) * detail::PRIME<64>(1);
+                    hash_ret ^= static_cast<hash64_t>(mem_ops::readLE<32>(p, endian)) * detail::PRIME<64>(1);
                     hash_ret = bit_ops::rotl<64>(hash_ret, 23) * detail::PRIME<64>(2) + detail::PRIME<64>(3);
                     p += 4;
                 }
@@ -599,7 +599,7 @@ namespace xxh
                     p++;
                 }
             }
-
+           
             hash_ret ^= hash_ret >> (N == 32 ? 15 : 33);
             hash_ret *= detail::PRIME<N>(2);
             hash_ret ^= hash_ret >> (N == 32 ? 13 : 29);
