@@ -10,7 +10,7 @@ Compatibility
 | gcc                  | 7                   |
 | EDG eccp             | 4.14                |
 
-=====
+=====================================
 
 xxHash - Extremely fast hash algorithm
 ======================================
