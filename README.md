@@ -1,6 +1,15 @@
 # xxhash_cpp
 Port of the xxHash library to C++17.
 
+Compatibility
+----
+| Compiler             | Min. Version        | 
+|----------------------|:-------------------:|
+| MSVC (Visual Studio) | 19.1 (VS 2017.3 P2) | 
+| clang                | 3.9                 | 
+| gcc                  | 7                   |
+| EDG eccp             | 4.14                |
+
 ----
 
 xxHash - Extremely fast hash algorithm
@@ -68,6 +77,9 @@ The following macros influence xxhash behavior. They are all disabled by default
                             if left undefined, the endianness is resolved at runtime, 
                             before `main` is called, at the cost of endianness not being `constexpr`.
 
+- `XXH_FORCE_MEMORY_ACCESS` : if defined to 2, enables unaligned reads as an optimization, this is not standard compliant,
+                              if defined to 1, enables the use of `packed` attribute for optimization, only defined for gcc and icc
+                              otherwise, uses the default fallback method (`memcpy`) 
 
 ### Other languages
 
