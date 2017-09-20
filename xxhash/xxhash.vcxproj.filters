@@ -18,5 +18,13 @@
     <ClInclude Include="xxhash.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="xxhash_c_version.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="compatibility_test.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>
