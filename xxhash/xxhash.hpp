@@ -508,7 +508,7 @@ namespace xxh
 
             if (memsize) 
             {   /* some data left from previous update */
-                XXH_memcpy(static_cast<uint8_t*>(&mem) + memsize, input, (N / 2) - memsize);
+                memcpy(static_cast<uint8_t*>(&mem) + memsize, input, (N / 2) - memsize);
                 
                 const hash_t<N>* ptr = &mem;
                 v1 = detail::round<N>(v1, mem_ops::readLE<N>(ptr, endian)); ptr++;
