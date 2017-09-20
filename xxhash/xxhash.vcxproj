@@ -141,10 +141,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="xxhash.hpp" />
-    <ClInclude Include="xxhash_c_version.h" />
-  </ItemGroup>
-  <ItemGroup>
-    <ClCompile Include="compatibility_test.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

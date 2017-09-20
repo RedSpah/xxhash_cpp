@@ -261,5 +261,5 @@ __pycache__/
 *.pyc
 
 # Test files
-xxhash/xxhash_c_version.h
-xxhash/compatibility_test.cpp
+*/xxhash_c_version.h
+*/compatibility_test.cpp
