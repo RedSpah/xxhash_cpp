@@ -399,7 +399,7 @@ namespace xxh
 
     }
     
-    template <size_t N, typename T>
+    template <size_t N, typename T> 
     hash_t<N> xxhash(const T* input, size_t len, hash_t<N> seed = 0, endianness endian = endianness::unspecified)
     {
         static_assert(!(N != 32 && N != 64), "You can only call xxhash in 32 or 64 bit mode.");
