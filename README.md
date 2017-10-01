@@ -1,5 +1,5 @@
 # xxhash_cpp
-Port of the xxHash library to C++11/17.
+Port of the xxHash library to C++17.
 
 Compatibility
 ----
