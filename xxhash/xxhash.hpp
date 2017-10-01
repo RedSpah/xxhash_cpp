@@ -119,7 +119,7 @@ namespace xxh
     ***************************************/
 #define XXH_CPP_VERSION_MAJOR    0
 #define XXH_CPP_VERSION_MINOR    1
-#define XXH_CPP_VERSION_RELEASE  0
+#define XXH_CPP_VERSION_RELEASE  1
 #define XXH_CPP_VERSION_NUMBER  (XXH_CPP_VERSION_MAJOR *100*100 + XXH_CPP_VERSION_MINOR *100 + XXH_CPP_VERSION_RELEASE)
     constexpr uint32_t versionNumber() {return XXH_CPP_VERSION_NUMBER;}
     
@@ -246,11 +246,13 @@ namespace xxh
 
         /* XXH_CPU_LITTLE_ENDIAN can be defined externally, for example on the compiler command line */
 
-        namespace 
-        { 
+         
                       
 #ifndef XXH_CPU_LITTLE_ENDIAN
-#define XXH_CPU_LITTLE_ENDIAN   (endian_lookup[2]==endianness::littleEndian)
+#define XXH_CPU_LITTLE_ENDIAN   (::xxh::mem_ops::_endian_internal::endian_lookup[2] == endianness::littleEndian)
+
+        namespace _endian_internal
+        {
             static std::array<endianness, 3> endian_lookup = { endianness::bigEndian, endianness::littleEndian, endianness::unspecified };
             static const int g_one = 1;
             struct _endian_thing { _endian_thing() { endian_lookup[2] = (endianness)(*(const char*)(&g_one)); } };
@@ -259,15 +261,13 @@ namespace xxh
 
         XXH_FORCE_STATIC_INLINE endianness get_endian(endianness endian)
         {
-            return endian_lookup[(uint8_t)endian];
+            return _endian_internal::endian_lookup[(uint8_t)endian];
         }
 
 #else
-            constexpr static std::array<endianness, 3> endian_lookup = { endianness::bigEndian, endianness::littleEndian, (XXH_CPU_LITTLE_ENDIAN) ? endianness::littleEndian : endianness::bigEndian };
-        }
-
         constexpr endianness get_endian(endianness endian)
         {
+            constexpr std::array<endianness, 3> endian_lookup = { endianness::bigEndian, endianness::littleEndian, (XXH_CPU_LITTLE_ENDIAN) ? endianness::littleEndian : endianness::bigEndian };
             return endian_lookup[(uint8_t)endian];
         }
 
@@ -314,6 +314,10 @@ namespace xxh
 
     namespace detail
     {
+        /* *******************************************************************
+        *  Hash functions - Implementation
+        *********************************************************************/
+        
         constexpr static std::array<hash32_t, 5> primes32 = { 2654435761U, 2246822519U, 3266489917U, 668265263U, 374761393U };
         constexpr static std::array<hash64_t, 5> primes64 = { 11400714785074694791ULL, 14029467366897019727ULL, 1609587929392839161ULL, 9650029242287828579ULL, 2870177450012600261ULL };
 
@@ -439,6 +443,13 @@ namespace xxh
         return detail::endian_align<N> (static_cast<const void*>(input), len * sizeof(T), seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(static_cast<const void*>(input)));
     }
 
+    template <size_t N>
+    hash_t<N> xxhash(const void* input, size_t len, hash_t<N> seed = 0, endianness endian = endianness::unspecified)
+    {
+        static_assert(!(N != 32 && N != 64), "You can only call xxhash in 32 or 64 bit mode.");
+        return detail::endian_align<N>(input, len, seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(input));
+    }
+
     template <size_t N, typename T>
     hash_t<N> xxhash(const std::basic_string<T>& input, hash_t<N> seed = 0, endianness endian = endianness::unspecified)
     {
@@ -488,11 +499,10 @@ namespace xxh
         hash_t<N> v1 = 0, v2 = 0, v3 = 0, v4 = 0;
         std::array<hash_t<N>, 4> mem = {0,0,0,0};
         uint32_t memsize = 0;
-        std::array<uint32_t, N / 32> _reserved_;
 
         XXH_FORCE_INLINE error_code _update_impl(const void* input, size_t length, endianness endian)
         {
-            const uint8_t* p = (const uint8_t*)input;
+            const uint8_t* p = reinterpret_cast<const uint8_t*>(input);
             const uint8_t* const bEnd = p + length;
 
             if (!input) return xxh::error_code::error;
@@ -501,16 +511,16 @@ namespace xxh
 
             if (memsize + length < (N / 2)) 
             {   /* fill in tmp buffer */
-                memcpy(static_cast<uint8_t*>(&mem) + memsize, input, len);
-                memsize += (uint32_t)len;
+                memcpy(reinterpret_cast<uint8_t*>(mem.data()) + memsize, input, length);
+                memsize += static_cast<uint32_t>(length);
                 return error_code::ok;
             }
 
             if (memsize) 
             {   /* some data left from previous update */
-                memcpy(static_cast<uint8_t*>(&mem) + memsize, input, (N / 2) - memsize);
+                memcpy(reinterpret_cast<uint8_t*>(mem.data()) + memsize, input, (N / 2) - memsize);
                 
-                const hash_t<N>* ptr = &mem;
+                const hash_t<N>* ptr = mem.data();
                 v1 = detail::round<N>(v1, mem_ops::readLE<N>(ptr, endian)); ptr++;
                 v2 = detail::round<N>(v2, mem_ops::readLE<N>(ptr, endian)); ptr++;
                 v3 = detail::round<N>(v3, mem_ops::readLE<N>(ptr, endian)); ptr++;
@@ -531,7 +541,7 @@ namespace xxh
             }
 
             if (p < bEnd) {
-                memcpy(mem, p, static_cast<size_t>(bEnd - p));
+                memcpy(mem.data(), p, static_cast<size_t>(bEnd - p));
                 memsize = static_cast<uint32_t>(bEnd - p);
             }
 
@@ -540,8 +550,8 @@ namespace xxh
 
         XXH_FORCE_INLINE hash_t<N> _digest_impl(endianness endian)
         {
-            const uint8_t* p = (const uint8_t*)&mem;
-            const uint8_t* const bEnd = (const uint8_t*)&mem + memsize;
+            const uint8_t* p = reinterpret_cast<const uint8_t*>(mem.data());
+            const uint8_t* const bEnd = reinterpret_cast<const uint8_t*>(mem.data()) + memsize;
             hash_t<N> hash_ret;
 
             if (total_len > (N / 2))
@@ -561,19 +571,19 @@ namespace xxh
                 hash_ret = v3 + detail::PRIME<N>(5);
             }
 
-            hash_ret += total_len;
+            hash_ret += static_cast<hash_t<N>>(total_len);
 
             if constexpr (N == 32)
             {
                 while (p + 4 <= bEnd) {
                     hash_ret += mem_ops::readLE<32>(p, endian) * detail::PRIME<32>(3);
-                    hash_ret = bit_ops::rotl<32>(h32, 17) * detail::PRIME<32>(4);
+                    hash_ret = bit_ops::rotl<32>(hash_ret, 17) * detail::PRIME<32>(4);
                     p += 4;
                 }
 
                 while (p<bEnd) {
                     hash_ret += (*p) * detail::PRIME<32>(5);
-                    hash_ret = bit_ops::rotl<32>(h32, 11) * detail::PRIME<32>(1);
+                    hash_ret = bit_ops::rotl<32>(hash_ret, 11) * detail::PRIME<32>(1);
                     p++;
                 }
             }
@@ -595,7 +605,7 @@ namespace xxh
 
                 while (p<bEnd) {
                     hash_ret ^= (*p) * detail::PRIME<64>(5);
-                    hash_ret = bit_ops::rotl<64>(h64, 11) * detail::PRIME<64>(1);
+                    hash_ret = bit_ops::rotl<64>(hash_ret, 11) * detail::PRIME<64>(1);
                     p++;
                 }
             }
@@ -618,8 +628,6 @@ namespace xxh
             v3 = seed + 0;
             v4 = seed - detail::PRIME<N>(1);
         };
-
-        ~hash_state_t() {};
         
         hash_state_t operator=(hash_state_t<N>& other)
         {
@@ -628,19 +636,23 @@ namespace xxh
 
         error_code reset(hash_t<N> seed)
         {
-            memset(this, 0, sizeof(hash_state_t<N>) - (N / 8));
+            memset(this, 0, sizeof(hash_state_t<N>));
             v1 = seed + detail::PRIME<N>(1) + detail::PRIME<N>(2);
             v2 = seed + detail::PRIME<N>(2);
             v3 = seed + 0;
             v4 = seed - detail::PRIME<N>(1);
             return error_code::ok;
         }
-
         
         template <typename T>
         error_code update(const T* input, size_t length, endianness endian = endianness::unspecified)
         {
             return _update_impl(static_cast<const void*>(input), length * sizeof(T), mem_ops::get_endian(endian));
+        }
+
+        error_code update(const void* input, size_t length, endianness endian = endianness::unspecified)
+        {
+            return _update_impl(input, length, mem_ops::get_endian(endian));
         }
 
         template <typename T>
@@ -676,7 +688,7 @@ namespace xxh
 
         hash_t<N> digest(endianness endian = endianness::unspecified)
         {
-            return digest_endian(mem_ops::get_endian(endian));
+            return _digest_impl(mem_ops::get_endian(endian));
         }
     };
 
@@ -691,12 +703,12 @@ namespace xxh
     template <size_t N>
     struct canonical_t
     {
-        std::array<uint8_t, N / 4> digest;
+        std::array<uint8_t, N / 8> digest;
 
         canonical_t(hash_t<N> hash)
         {
-            if (XXH_CPU_LITTLE_ENDIAN) hash = bit_ops::swap<N>(hash);
-            memcpy(digest, &hash, sizeof(canonical_t<N>));
+            if (XXH_CPU_LITTLE_ENDIAN) {hash = bit_ops::swap<N>(hash);}
+            memcpy(digest.data(), &hash, sizeof(canonical_t<N>));
         }
 
         hash_t<N> get_hash()
