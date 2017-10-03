@@ -181,15 +181,15 @@ namespace xxh
         template <size_t N>
         XXH_FORCE_STATIC_INLINE hash_t<N> rotl(hash_t<N> n, int32_t r)
         {
-            if constexpr (N == 32) return rotl32(n, r);
-            else return rotl64(n, r);
+            if constexpr (N == 32) { return rotl32(n, r);}
+            else { return rotl64(n, r);}
         }
 
         template <size_t N>
         XXH_FORCE_STATIC_INLINE hash_t<N> swap(hash_t<N> x)
         {
-            if constexpr (N == 32) return swap32(x);
-            else return swap64(x);
+            if constexpr (N == 32) { return swap32(x);}
+            else { return swap64(x);}
         }
     }
 
@@ -283,10 +283,8 @@ namespace xxh
         template <size_t N>
         XXH_FORCE_STATIC_INLINE hash_t<N> readLE_align(const void* ptr, endianness endian, alignment align)
         {
-            if (align == alignment::unaligned)
-                return endian == endianness::littleEndian ? read_unaligned<N>(ptr) : bit_ops::swap<N>(read_unaligned<N>(ptr));
-            else
-                return endian == endianness::littleEndian ? *(const hash_t<N>*)ptr : bit_ops::swap<N>(*(const hash_t<N>*)ptr);
+            if (align == alignment::unaligned) { return endian == endianness::littleEndian ? read_unaligned<N>(ptr) : bit_ops::swap<N>(read_unaligned<N>(ptr)); }
+            else { return endian == endianness::littleEndian ? *(const hash_t<N>*)ptr : bit_ops::swap<N>(*(const hash_t<N>*)ptr); }
         }
 
         template <size_t N>
@@ -351,18 +349,20 @@ namespace xxh
         {
             static_assert(!(N != 32 && N != 64), "You can only call endian_align in 32 or 64 bit mode.");
 
-            const uint8_t* p = (const uint8_t*)input;
+            const uint8_t* p = static_cast<const uint8_t*>(input);
             const uint8_t* bEnd = p + len;
             hash_t<N> hash_ret;
 
-            if (len >= (N / 2)) {
+            if (len >= (N / 2)) 
+            {
                 const uint8_t* const limit = bEnd - (N / 2);
                 hash_t<N> v1 = seed + PRIME<N>(1) + PRIME<N>(2);
                 hash_t<N> v2 = seed + PRIME<N>(2);
                 hash_t<N> v3 = seed + 0;
                 hash_t<N> v4 = seed - PRIME<N>(1);
 
-                do {
+                do 
+                {
                     v1 = round<N>(v1, mem_ops::readLE_align<N>(p, endian, align)); p += (N / 8);
                     v2 = round<N>(v2, mem_ops::readLE_align<N>(p, endian, align)); p += (N / 8);
                     v3 = round<N>(v3, mem_ops::readLE_align<N>(p, endian, align)); p += (N / 8);
@@ -379,33 +379,39 @@ namespace xxh
                     hash_ret = mergeRound64(hash_ret, v4);
                 }
             }
-            else {
-                hash_ret = seed + PRIME<N>(5);
-            }
+            else { hash_ret = seed + PRIME<N>(5); }
 
             hash_ret += static_cast<hash_t<N>>(len);
 
             if constexpr (N == 64)
             {
-                while (p + 8 <= bEnd) {
+                while (p + 8 <= bEnd) 
+                {
                     const hash64_t k1 = round<64>(0, mem_ops::readLE_align<64>(p, endian, align));
                     hash_ret ^= k1;
                     hash_ret = bit_ops::rotl<64>(hash_ret, 27) * PRIME<64>(1) + PRIME<64>(4);
                     p += 8;
                 }
 
-                if (p + 4 <= bEnd) {
+                if (p + 4 <= bEnd) 
+                {
                     hash_ret ^= static_cast<hash64_t>(mem_ops::readLE_align<32>(p, endian, align)) * PRIME<64>(1);
                     hash_ret = bit_ops::rotl<64>(hash_ret, 23) * PRIME<64>(2) + PRIME<64>(3);
                     p += 4;
                 }
 
-                while (p < bEnd) {
+                while (p < bEnd) 
+                {
                     hash_ret ^= (*p) * PRIME<64>(5);
                     hash_ret = bit_ops::rotl<64>(hash_ret, 11) * PRIME<64>(1);
                     p++;
                 }
 
+                hash_ret ^= hash_ret >> 33;
+                hash_ret *= PRIME<64>(2);
+                hash_ret ^= hash_ret >> 29;
+                hash_ret *= PRIME<64>(3);
+                hash_ret ^= hash_ret >> 32;
             }
             else
             {
@@ -422,14 +428,13 @@ namespace xxh
                     hash_ret = bit_ops::rotl<32>(hash_ret, 11) * PRIME<32>(1);
                     p++;
                 }
+
+                hash_ret ^= hash_ret >> 15;
+                hash_ret *= PRIME<32>(2);
+                hash_ret ^= hash_ret >> 13;
+                hash_ret *= PRIME<32>(3);
+                hash_ret ^= hash_ret >> 16;
             }
-
-
-            hash_ret ^= hash_ret >> (N == 32 ? 15 : 33);
-            hash_ret *= PRIME<N>(2);
-            hash_ret ^= hash_ret >> (N == 32 ? 13 : 29);
-            hash_ret *= PRIME<N>(3);
-            hash_ret ^= hash_ret >> (N == 32 ? 16 : 32);
 
             return hash_ret;
         }
@@ -505,7 +510,7 @@ namespace xxh
             const uint8_t* p = reinterpret_cast<const uint8_t*>(input);
             const uint8_t* const bEnd = p + length;
 
-            if (!input) return xxh::error_code::error;
+            if (!input) {return xxh::error_code::error;}
 
             total_len += length;
 
@@ -530,9 +535,12 @@ namespace xxh
                 memsize = 0;
             }
 
-            if (p <= bEnd - (N / 2)) {
+            if (p <= bEnd - (N / 2)) 
+            {
                 const uint8_t* const limit = bEnd - (N / 2);
-                do {
+
+                do 
+                {
                     v1 = detail::round<N>(v1, mem_ops::readLE<N>(p, endian)); p += (N / 8);
                     v2 = detail::round<N>(v2, mem_ops::readLE<N>(p, endian)); p += (N / 8);
                     v3 = detail::round<N>(v3, mem_ops::readLE<N>(p, endian)); p += (N / 8);
@@ -540,7 +548,8 @@ namespace xxh
                 } while (p <= limit);
             }
 
-            if (p < bEnd) {
+            if (p < bEnd) 
+            {
                 memcpy(mem.data(), p, static_cast<size_t>(bEnd - p));
                 memsize = static_cast<uint32_t>(bEnd - p);
             }
@@ -566,28 +575,11 @@ namespace xxh
                     hash_ret = detail::mergeRound64(hash_ret, v4);
                 }
             }
-            else
-            {
-                hash_ret = v3 + detail::PRIME<N>(5);
-            }
+            else {hash_ret = v3 + detail::PRIME<N>(5);}
 
             hash_ret += static_cast<hash_t<N>>(total_len);
 
-            if constexpr (N == 32)
-            {
-                while (p + 4 <= bEnd) {
-                    hash_ret += mem_ops::readLE<32>(p, endian) * detail::PRIME<32>(3);
-                    hash_ret = bit_ops::rotl<32>(hash_ret, 17) * detail::PRIME<32>(4);
-                    p += 4;
-                }
-
-                while (p<bEnd) {
-                    hash_ret += (*p) * detail::PRIME<32>(5);
-                    hash_ret = bit_ops::rotl<32>(hash_ret, 11) * detail::PRIME<32>(1);
-                    p++;
-                }
-            }
-            else
+            if constexpr (N == 64)
             {
 
                 while (p + 8 <= bEnd) {
@@ -603,19 +595,41 @@ namespace xxh
                     p += 4;
                 }
 
-                while (p<bEnd) {
+                while (p < bEnd) {
                     hash_ret ^= (*p) * detail::PRIME<64>(5);
                     hash_ret = bit_ops::rotl<64>(hash_ret, 11) * detail::PRIME<64>(1);
                     p++;
                 }
-            }
-           
-            hash_ret ^= hash_ret >> (N == 32 ? 15 : 33);
-            hash_ret *= detail::PRIME<N>(2);
-            hash_ret ^= hash_ret >> (N == 32 ? 13 : 29);
-            hash_ret *= detail::PRIME<N>(3);
-            hash_ret ^= hash_ret >> (N == 32 ? 16 : 32);
 
+                hash_ret ^= hash_ret >> 33;
+                hash_ret *= detail::PRIME<64>(2);
+                hash_ret ^= hash_ret >> 29;
+                hash_ret *= detail::PRIME<64>(3);
+                hash_ret ^= hash_ret >> 32;
+            }
+            else
+            {
+                while (p + 4 <= bEnd) 
+                {
+                    hash_ret += mem_ops::readLE<32>(p, endian) * detail::PRIME<32>(3);
+                    hash_ret = bit_ops::rotl<32>(hash_ret, 17) * detail::PRIME<32>(4);
+                    p += 4;
+                }
+
+                while (p < bEnd) 
+                {
+                    hash_ret += (*p) * detail::PRIME<32>(5);
+                    hash_ret = bit_ops::rotl<32>(hash_ret, 11) * detail::PRIME<32>(1);
+                    p++;
+                }
+
+                hash_ret ^= hash_ret >> 15;
+                hash_ret *= detail::PRIME<32>(2);
+                hash_ret ^= hash_ret >> 13;
+                hash_ret *= detail::PRIME<32>(3);
+                hash_ret ^= hash_ret >> 16;
+            }
+            
             return hash_ret;
         }
 
