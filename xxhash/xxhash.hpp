@@ -118,8 +118,8 @@ namespace xxh
     *  Version
     ***************************************/
 #define XXH_CPP_VERSION_MAJOR    0
-#define XXH_CPP_VERSION_MINOR    1
-#define XXH_CPP_VERSION_RELEASE  1
+#define XXH_CPP_VERSION_MINOR    6
+#define XXH_CPP_VERSION_RELEASE  5
 #define XXH_CPP_VERSION_NUMBER  (XXH_CPP_VERSION_MAJOR *100*100 + XXH_CPP_VERSION_MINOR *100 + XXH_CPP_VERSION_RELEASE)
     constexpr uint32_t versionNumber() {return XXH_CPP_VERSION_NUMBER;}
     
@@ -198,7 +198,7 @@ namespace xxh
     ***************************************/
 
     enum class alignment : uint8_t { aligned, unaligned };
-    enum class endianness : uint8_t { bigEndian = 0, littleEndian = 1, unspecified = 2 };
+    enum class endianness : uint8_t { big_endian = 0, little_endian = 1, unspecified = 2 };
 
     namespace mem_ops
     {
@@ -242,20 +242,15 @@ namespace xxh
         *  Architecture Macros
         ***************************************/
 
-
-
-        /* XXH_CPU_LITTLE_ENDIAN can be defined externally, for example on the compiler command line */
-
-         
+        /* XXH_CPU_LITTLE_ENDIAN can be defined externally, for example on the compiler command line */     
                       
 #ifndef XXH_CPU_LITTLE_ENDIAN
-#define XXH_CPU_LITTLE_ENDIAN   (::xxh::mem_ops::_endian_internal::endian_lookup[2] == endianness::littleEndian)
 
         namespace _endian_internal
         {
-            static std::array<endianness, 3> endian_lookup = { endianness::bigEndian, endianness::littleEndian, endianness::unspecified };
+            static std::array<endianness, 3> endian_lookup = { endianness::big_endian, endianness::little_endian, endianness::unspecified };
             static const int g_one = 1;
-            struct _endian_thing { _endian_thing() { endian_lookup[2] = (endianness)(*(const char*)(&g_one)); } };
+            struct _endian_thing { _endian_thing() { endian_lookup[2] = static_cast<endianness>(*(const char*)(&g_one)); } };
             static _endian_thing _unused;
         }
 
@@ -264,11 +259,21 @@ namespace xxh
             return _endian_internal::endian_lookup[(uint8_t)endian];
         }
 
+        XXH_FORCE_STATIC_INLINE bool is_little_endian()
+        {
+            return get_endian(endianness::unspecified) == endianness::little_endian;
+        }
+
 #else
         constexpr endianness get_endian(endianness endian)
         {
-            constexpr std::array<endianness, 3> endian_lookup = { endianness::bigEndian, endianness::littleEndian, (XXH_CPU_LITTLE_ENDIAN) ? endianness::littleEndian : endianness::bigEndian };
+            constexpr std::array<endianness, 3> endian_lookup = { endianness::big_endian, endianness::little_endian, (XXH_CPU_LITTLE_ENDIAN) ? endianness::little_endian : endianness::big_endian };
             return endian_lookup[(uint8_t)endian];
+        }
+
+        constexpr bool is_little_endian()
+        {
+            return get_endian(endianness::unspecified) == endianness::little_endian;
         }
 
 #endif
@@ -283,8 +288,14 @@ namespace xxh
         template <size_t N>
         XXH_FORCE_STATIC_INLINE hash_t<N> readLE_align(const void* ptr, endianness endian, alignment align)
         {
-            if (align == alignment::unaligned) { return endian == endianness::littleEndian ? read_unaligned<N>(ptr) : bit_ops::swap<N>(read_unaligned<N>(ptr)); }
-            else { return endian == endianness::littleEndian ? *(const hash_t<N>*)ptr : bit_ops::swap<N>(*(const hash_t<N>*)ptr); }
+            if (align == alignment::unaligned) 
+            { 
+                return endian == endianness::little_endian ? read_unaligned<N>(ptr) : bit_ops::swap<N>(read_unaligned<N>(ptr)); 
+            }
+            else 
+            { 
+                return endian == endianness::little_endian ? *reinterpret_cast<const hash_t<N>*>(ptr) : bit_ops::swap<N>(*reinterpret_cast<const hash_t<N>*>(ptr));
+            }
         }
 
         template <size_t N>
@@ -294,9 +305,9 @@ namespace xxh
         }
 
         template <size_t N>
-        XXH_FORCE_STATIC_INLINE hash_t<N> readBE(const void* ptr)
+        XXH_FORCE_STATIC_INLINE hash_t<N> readBE(const void* ptr)   
         {
-            return XXH_CPU_LITTLE_ENDIAN ? bit_ops::swap<N>(read_unaligned<N>(ptr)) : read_unaligned<N>(ptr);
+            return is_little_endian() ? bit_ops::swap<N>(read_unaligned<N>(ptr)) : read_unaligned<N>(ptr);
         }
 
         template <size_t N>
@@ -721,7 +732,7 @@ namespace xxh
 
         canonical_t(hash_t<N> hash)
         {
-            if (XXH_CPU_LITTLE_ENDIAN) {hash = bit_ops::swap<N>(hash);}
+            if (mem_ops::is_little_endian()) {hash = bit_ops::swap<N>(hash);}
             memcpy(digest.data(), &hash, sizeof(canonical_t<N>));
         }
 
