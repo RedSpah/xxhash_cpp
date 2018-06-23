@@ -10,7 +10,7 @@
 xxHash - Extremely Fast Hash algorithm
 Header File
 Copyright (C) 2012-2016, Yann Collet.
-Copyright (C) 2017, Piotr Pliszka.
+Copyright (C) 2017-2018, Piotr Pliszka.
 All rights reserved.
 
 BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
