@@ -9,7 +9,7 @@
 /*
 xxHash - Extremely Fast Hash algorithm
 Header File
-Copyright (C) 2012-2016, Yann Collet.
+Copyright (C) 2012-2018, Yann Collet.
 Copyright (C) 2017-2018, Piotr Pliszka.
 All rights reserved.
 
