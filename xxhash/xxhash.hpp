@@ -117,11 +117,10 @@ namespace xxh
     /* *************************************
     *  Version
     ***************************************/
-#define XXH_CPP_VERSION_MAJOR    0
-#define XXH_CPP_VERSION_MINOR    6
-#define XXH_CPP_VERSION_RELEASE  5
-#define XXH_CPP_VERSION_NUMBER  (XXH_CPP_VERSION_MAJOR *100*100 + XXH_CPP_VERSION_MINOR *100 + XXH_CPP_VERSION_RELEASE)
-    constexpr uint32_t versionNumber() {return XXH_CPP_VERSION_NUMBER;}
+    constexpr int cpp_version_major = 0;
+    constexpr int cpp_version_minor = 6;
+    constexpr int cpp_version_release = 5;
+    constexpr uint32_t version_number() {return cpp_version_major * 10000 + cpp_version_minor * 100 + cpp_version_release;}
     
     namespace hash_t_impl
     {
