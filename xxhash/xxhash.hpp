@@ -568,7 +568,7 @@ namespace xxh
             return error_code::ok;
         }
 
-        XXH_FORCE_INLINE hash_t<N> _digest_impl(endianness endian)
+        XXH_FORCE_INLINE hash_t<N> _digest_impl(endianness endian) const
         {
             const uint8_t* p = reinterpret_cast<const uint8_t*>(mem.data());
             const uint8_t* const bEnd = reinterpret_cast<const uint8_t*>(mem.data()) + memsize;
@@ -736,7 +736,7 @@ namespace xxh
             memcpy(digest.data(), &hash, sizeof(canonical_t<N>));
         }
 
-        hash_t<N> get_hash()
+        hash_t<N> get_hash() const
         {
             return mem_ops::readBE<64>(&digest);
         }
