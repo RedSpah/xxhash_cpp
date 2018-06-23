@@ -10,7 +10,39 @@ Compatibility
 | gcc                  | 7                   |
 | EDG eccp             | 4.14                |
 
+Example Usage
 ----
+
+```
+// standalone hash
+std::array<int, 4> input {322, 2137, 42069, 65536};
+xxh::hash_t<32> hash = xxh::xxhash<32>(input); 
+
+// hash streaming
+std::array<unsigned char, 512> buffer;
+xxh::hash_state_t<64> hash_stream; 
+while (fill_buffer(buffer))
+{
+  hash_stream.update(buffer);
+}
+xxh::hash_t<64> final_hash = hash_stream.digest();
+```
+The template argument specifies whether the algorithm will use the 32 or 64 bit version. Other values are not allowed. Typedefs `hash32_t`, `hash64_t`, `hash_state32_t` and `hash_state64_t` are provided.
+
+`xxh::xxhash` and `xxh::hash_state_t::update` provide several convenient overloads, all accepting optional `seed` and `endianness` arguments:
+* C-style `const void*` + `size_t` pair
+* `const T*` + `size_t` pair, for passing C arrays
+* `const std::vector<T>&`
+* `const std::basic_string<T>&`
+* A pair of templated iterators
+* `const std::array<T, N>&`
+* `const std::initializer_list<T>&`
+
+Build Instructions
+----
+
+The library is provided as a single standalone header, for static linking only. No build instructions are nessessary.
+
 
 xxHash - Extremely fast hash algorithm
 ======================================
