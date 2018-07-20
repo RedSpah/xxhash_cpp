@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <cstring>
 #include <array>
 #include <type_traits>
 #include <cstdint>
@@ -469,7 +470,7 @@ namespace xxh
     hash_t<N> xxhash(const std::basic_string<T>& input, hash_t<N> seed = 0, endianness endian = endianness::unspecified)
     {
         static_assert(!(N != 32 && N != 64), "You can only call xxhash in 32 or 64 bit mode.");
-        return detail::endian_align<N> (static_cast<const void*>(input.data()), input.length() * sizeof(T), seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(static_cast<const void*>(input.data())));
+        return detail::endian_align<N>(static_cast<const void*>(input.data()), input.length() * sizeof(T), seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(static_cast<const void*>(input.data())));
     }
 
     template <size_t N, typename ContiguousIterator>
@@ -477,21 +478,21 @@ namespace xxh
     {
         static_assert(!(N != 32 && N != 64), "You can only call xxhash in 32 or 64 bit mode.");
         using T = typename std::decay_t<decltype(*end)>;
-        return detail::endian_align<N> (static_cast<const void*>(&*begin), (end - begin) * sizeof(T), seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(static_cast<const void*>(&*begin)));
+        return detail::endian_align<N>(static_cast<const void*>(&*begin), (end - begin) * sizeof(T), seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(static_cast<const void*>(&*begin)));
     }
 
     template <size_t N, typename T>
     hash_t<N> xxhash(const std::vector<T>& input, hash_t<N> seed = 0, endianness endian = endianness::unspecified)
     {
         static_assert(!(N != 32 && N != 64), "You can only call xxhash in 32 or 64 bit mode.");
-        return detail::endian_align<N> (static_cast<const void*>(input.data()), input.size() * sizeof(T), seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(static_cast<const void*>(input.data())));
+        return detail::endian_align<N>(static_cast<const void*>(input.data()), input.size() * sizeof(T), seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(static_cast<const void*>(input.data())));
     }
 
     template <size_t N, typename T, size_t AN>
     hash_t<N> xxhash(const std::array<T, AN>& input, hash_t<N> seed = 0, endianness endian = endianness::unspecified)
     {
         static_assert(!(N != 32 && N != 64), "You can only call xxhash in 32 or 64 bit mode.");
-        return detail::endian_align<N> (static_cast<const void*>(input.data()), AN * sizeof(T), seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(static_cast<const void*>(input.data())));
+        return detail::endian_align<N>(static_cast<const void*>(input.data()), AN * sizeof(T), seed, mem_ops::get_endian(endian), mem_ops::get_alignment<N>(static_cast<const void*>(input.data())));
     }
 
     template <size_t N, typename T>
