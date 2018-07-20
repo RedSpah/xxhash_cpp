@@ -645,7 +645,7 @@ namespace xxh
         }
 
     public:
-        hash_state_t(hash_t<N> seed) 
+        hash_state_t(hash_t<N> seed = 0) 
         {
             static_assert(!(N != 32 && N != 64), "You can only stream hashing in 32 or 64 bit mode.");
             v1 = seed + detail::PRIME<N>(1) + detail::PRIME<N>(2);
@@ -659,7 +659,7 @@ namespace xxh
             memcpy(this, other, sizeof(hash_state_t<N>));
         }
 
-        error_code reset(hash_t<N> seed)
+        error_code reset(hash_t<N> seed = 0)
         {
             memset(this, 0, sizeof(hash_state_t<N>));
             v1 = seed + detail::PRIME<N>(1) + detail::PRIME<N>(2);
