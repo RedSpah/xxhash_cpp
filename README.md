@@ -13,7 +13,7 @@ Compatibility
 Example Usage
 ----
 
-```
+```cpp
 // standalone hash
 std::array<int, 4> input {322, 2137, 42069, 65536};
 xxh::hash_t<32> hash = xxh::xxhash<32>(input); 
