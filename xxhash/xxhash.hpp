@@ -101,19 +101,21 @@ You can contact the author at :
 ***************************************/
 #define XXH_GCC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
 
-#ifdef _MSC_VER    /* Visual Studio */
-#  pragma warning(disable : 4127)      /* disable: C4127: conditional expression is constant */
-#  define XXH_FORCE_STATIC_INLINE static __forceinline
-#  define XXH_FORCE_INLINE __forceinline
+/*
+#ifdef _MSC_VER     Visual Studio 
+#  pragma warning(disable : 4127)       disable: C4127: conditional expression is constant 
+#  define XXH_FORCE_STATIC_INLINE static inline
+#  define XXH_FORCE_INLINE inline
 #else 
 #  ifdef __GNUC__
-#    define XXH_FORCE_STATIC_INLINE static inline __attribute__((always_inline))
-#    define XXH_FORCE_INLINE inline __attribute__((always_inline))
+#    define XXH_FORCE_STATIC_INLINE static inline 
+#    define XXH_FORCE_INLINE inline 
 #  else
 #    define XXH_FORCE_STATIC_INLINE static inline
 #    define XXH_FORCE_INLINE inline 
 #  endif
 #endif
+*/
 
 namespace xxh
 {
@@ -162,33 +164,33 @@ namespace xxh
 		******************************************/
 
 #if defined(_MSC_VER)
-		XXH_FORCE_STATIC_INLINE uint32_t rotl32(uint32_t x, int32_t r) { return _rotl(x, r); }
-		XXH_FORCE_STATIC_INLINE uint64_t rotl64(uint64_t x, int32_t r) { return _rotl64(x, r); }
+		static inline uint32_t rotl32(uint32_t x, int32_t r) { return _rotl(x, r); }
+		static inline uint64_t rotl64(uint64_t x, int32_t r) { return _rotl64(x, r); }
 #else
-		XXH_FORCE_STATIC_INLINE uint32_t rotl32(uint32_t x, int32_t r) { return ((x << r) | (x >> (32 - r))); }
-		XXH_FORCE_STATIC_INLINE uint64_t rotl64(uint64_t x, int32_t r) { return ((x << r) | (x >> (64 - r))); }
+		static inline uint32_t rotl32(uint32_t x, int32_t r) { return ((x << r) | (x >> (32 - r))); }
+		static inline uint64_t rotl64(uint64_t x, int32_t r) { return ((x << r) | (x >> (64 - r))); }
 #endif
 
 #if defined(_MSC_VER)     /* Visual Studio */
-		XXH_FORCE_STATIC_INLINE uint32_t swap32(uint32_t x) { return _byteswap_ulong(x); }
-		XXH_FORCE_STATIC_INLINE uint64_t swap64(uint64_t x) { return _byteswap_uint64(x); }
+		static inline uint32_t swap32(uint32_t x) { return _byteswap_ulong(x); }
+		static inline uint64_t swap64(uint64_t x) { return _byteswap_uint64(x); }
 #elif XXH_GCC_VERSION >= 403
-		XXH_FORCE_STATIC_INLINE uint32_t swap32(uint32_t x) { return __builtin_bswap32(x); }
-		XXH_FORCE_STATIC_INLINE uint64_t swap64(uint64_t x) { return __builtin_bswap64(x); }
+		static inline uint32_t swap32(uint32_t x) { return __builtin_bswap32(x); }
+		static inline uint64_t swap64(uint64_t x) { return __builtin_bswap64(x); }
 #else
-		XXH_FORCE_STATIC_INLINE uint32_t swap32(uint32_t x) { return ((x << 24) & 0xff000000) | ((x << 8) & 0x00ff0000) | ((x >> 8) & 0x0000ff00) | ((x >> 24) & 0x000000ff); }
-		XXH_FORCE_STATIC_INLINE uint64_t swap64(uint64_t x) { return ((x << 56) & 0xff00000000000000ULL) | ((x << 40) & 0x00ff000000000000ULL) | ((x << 24) & 0x0000ff0000000000ULL) | ((x << 8) & 0x000000ff00000000ULL) | ((x >> 8) & 0x00000000ff000000ULL) | ((x >> 24) & 0x0000000000ff0000ULL) | ((x >> 40) & 0x000000000000ff00ULL) | ((x >> 56) & 0x00000000000000ffULL); }
+		static inline uint32_t swap32(uint32_t x) { return ((x << 24) & 0xff000000) | ((x << 8) & 0x00ff0000) | ((x >> 8) & 0x0000ff00) | ((x >> 24) & 0x000000ff); }
+		static inline uint64_t swap64(uint64_t x) { return ((x << 56) & 0xff00000000000000ULL) | ((x << 40) & 0x00ff000000000000ULL) | ((x << 24) & 0x0000ff0000000000ULL) | ((x << 8) & 0x000000ff00000000ULL) | ((x >> 8) & 0x00000000ff000000ULL) | ((x >> 24) & 0x0000000000ff0000ULL) | ((x >> 40) & 0x000000000000ff00ULL) | ((x >> 56) & 0x00000000000000ffULL); }
 #endif
 
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> rotl(hash_t<N> n, int32_t r)
+		static inline hash_t<N> rotl(hash_t<N> n, int32_t r)
 		{
 			if constexpr (N == 32) { return rotl32(n, r); }
 			else { return rotl64(n, r); }
 		}
 
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> swap(hash_t<N> x)
+		static inline hash_t<N> swap(hash_t<N> x)
 		{
 			if constexpr (N == 32) { return swap32(x); }
 			else { return swap64(x); }
@@ -211,7 +213,7 @@ namespace xxh
 
 		/* Force direct memory access. Only works on CPU which support unaligned memory access in hardware */
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> read_unaligned(const void* memPtr) { return *(const hash_t<N>*)memPtr; }
+		static inline hash_t<N> read_unaligned(const void* memPtr) { return *(const hash_t<N>*)memPtr; }
 
 #elif (defined(XXH_FORCE_MEMORY_ACCESS) && (XXH_FORCE_MEMORY_ACCESS==1))
 
@@ -221,14 +223,14 @@ namespace xxh
 		using unalign = union { hash_t<N> uval; } __attribute((packed));
 
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> read_unaligned(const void* memPtr) { return ((const unalign*)memPtr)->uval; }
+		static inline hash_t<N> read_unaligned(const void* memPtr) { return ((const unalign*)memPtr)->uval; }
 #else
 
 		/* portable and safe solution. Generally efficient.
 		* see : http://stackoverflow.com/a/32095106/646947
 		*/
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> read_unaligned(const void* memPtr)
+		static inline hash_t<N> read_unaligned(const void* memPtr)
 		{
 			hash_t<N> val;
 			memcpy(&val, memPtr, sizeof(val));
@@ -237,8 +239,8 @@ namespace xxh
 
 #endif   /* XXH_FORCE_DIRECT_MEMORY_ACCESS */
 
-		XXH_FORCE_STATIC_INLINE hash_t<32> read32(const void* memPtr) { return read_unaligned<32>(memPtr); }
-		XXH_FORCE_STATIC_INLINE hash_t<64> read64(const void* memPtr) { return read_unaligned<64>(memPtr); }
+		static inline hash_t<32> read32(const void* memPtr) { return read_unaligned<32>(memPtr); }
+		static inline hash_t<64> read64(const void* memPtr) { return read_unaligned<64>(memPtr); }
 
 		/* *************************************
 		*  Architecture Macros
@@ -248,7 +250,7 @@ namespace xxh
 
 #ifndef XXH_CPU_LITTLE_ENDIAN
 
-		XXH_FORCE_STATIC_INLINE endianness get_endian(endianness endian)
+		static inline endianness get_endian(endianness endian)
 		{
 			static struct _dummy_t
 			{
@@ -263,7 +265,7 @@ namespace xxh
 			return _dummy.endian_lookup[(uint8_t)endian];
 		}
 
-		XXH_FORCE_STATIC_INLINE bool is_little_endian()
+		static inline bool is_little_endian()
 		{
 			return get_endian(endianness::unspecified) == endianness::little_endian;
 		}
@@ -290,7 +292,7 @@ namespace xxh
 
 
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> readLE_align(const void* ptr, endianness endian, alignment align)
+		static inline hash_t<N> readLE_align(const void* ptr, endianness endian, alignment align)
 		{
 			if (align == alignment::unaligned)
 			{
@@ -303,19 +305,19 @@ namespace xxh
 		}
 
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> readLE(const void* ptr, endianness endian)
+		static inline hash_t<N> readLE(const void* ptr, endianness endian)
 		{
 			return readLE_align<N>(ptr, endian, alignment::unaligned);
 		}
 
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> readBE(const void* ptr)
+		static inline hash_t<N> readBE(const void* ptr)
 		{
 			return is_little_endian() ? bit_ops::swap<N>(read_unaligned<N>(ptr)) : read_unaligned<N>(ptr);
 		}
 
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE alignment get_alignment(const void* input)
+		static inline alignment get_alignment(const void* input)
 		{
 			return ((XXH_FORCE_ALIGN_CHECK) && ((reinterpret_cast<uintptr_t>(input) & ((N / 8) - 1)) == 0)) ? xxh::alignment::aligned : xxh::alignment::unaligned;
 		}
@@ -343,7 +345,7 @@ namespace xxh
 		}
 
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> round(hash_t<N> seed, hash_t<N> input)
+		static inline hash_t<N> round(hash_t<N> seed, hash_t<N> input)
 		{
 			seed += input * PRIME<N>(2);
 			seed = bit_ops::rotl<N>(seed, ((N == 32) ? 13 : 31));
@@ -351,7 +353,7 @@ namespace xxh
 			return seed;
 		}
 
-		XXH_FORCE_STATIC_INLINE hash64_t mergeRound64(hash64_t acc, hash64_t val)
+		static inline hash64_t mergeRound64(hash64_t acc, hash64_t val)
 		{
 			val = round<64>(0, val);
 			acc ^= val;
@@ -360,7 +362,7 @@ namespace xxh
 		}
 
 		template <size_t N>
-		XXH_FORCE_STATIC_INLINE hash_t<N> endian_align(const void* input, size_t len, hash_t<N> seed, xxh::endianness endian, xxh::alignment align)
+		static inline hash_t<N> endian_align(const void* input, size_t len, hash_t<N> seed, xxh::endianness endian, xxh::alignment align)
 		{
 			static_assert(!(N != 32 && N != 64), "You can only call endian_align in 32 or 64 bit mode.");
 
@@ -513,7 +515,7 @@ namespace xxh
 		std::array<hash_t<N>, 4> mem = { 0,0,0,0 };
 		uint32_t memsize = 0;
 
-		XXH_FORCE_INLINE error_code _update_impl(const void* input, size_t length, endianness endian)
+		inline error_code _update_impl(const void* input, size_t length, endianness endian)
 		{
 			const uint8_t* p = reinterpret_cast<const uint8_t*>(input);
 			const uint8_t* const bEnd = p + length;
@@ -565,7 +567,7 @@ namespace xxh
 			return error_code::ok;
 		}
 
-		XXH_FORCE_INLINE hash_t<N> _digest_impl(endianness endian) const
+		inline hash_t<N> _digest_impl(endianness endian) const
 		{
 			const uint8_t* p = reinterpret_cast<const uint8_t*>(mem.data());
 			const uint8_t* const bEnd = reinterpret_cast<const uint8_t*>(mem.data()) + memsize;
