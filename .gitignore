@@ -263,3 +263,4 @@ __pycache__/
 # Test files
 */xxhash_c_version.h
 */compatibility_test.cpp
+/xxhash/test_main.cpp

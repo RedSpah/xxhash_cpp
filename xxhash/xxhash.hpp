@@ -7,6 +7,8 @@
 #include <vector>
 #include <string>
 
+#include <iostream>
+
 /*
 xxHash - Extremely Fast Hash algorithm
 Header File
@@ -246,17 +248,19 @@ namespace xxh
                       
 #ifndef XXH_CPU_LITTLE_ENDIAN
 
-        namespace _endian_internal
-        {
-            static std::array<endianness, 3> endian_lookup = { endianness::big_endian, endianness::little_endian, endianness::unspecified };
-            static const int g_one = 1;
-            struct _endian_thing { _endian_thing() { endian_lookup[2] = static_cast<endianness>(*(const char*)(&g_one)); } };
-            static _endian_thing _unused;
-        }
-
         XXH_FORCE_STATIC_INLINE endianness get_endian(endianness endian)
         {
-            return _endian_internal::endian_lookup[(uint8_t)endian];
+			static struct _dummy_t
+			{
+				std::array<endianness, 3> endian_lookup = { endianness::big_endian, endianness::little_endian, endianness::unspecified };
+				const int g_one = 1;
+				_dummy_t()
+				{
+					endian_lookup[2] = static_cast<endianness>(*(const char*)(&g_one));
+				}
+			} _dummy;
+
+            return _dummy.endian_lookup[(uint8_t)endian];
         }
 
         XXH_FORCE_STATIC_INLINE bool is_little_endian()
