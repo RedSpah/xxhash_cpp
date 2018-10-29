@@ -75,8 +75,9 @@ You can contact the author at :
 * to improve speed for Big-endian CPU.
 * This option has no impact on Little_Endian CPU.
 */
-#ifndef XXH_FORCE_NATIVE_FORMAT   /* can be defined externally */
-#  define XXH_FORCE_NATIVE_FORMAT 0
+#if !defined(XXH_FORCE_NATIVE_FORMAT) || (XXH_FORCE_NATIVE_FORMAT == 0)  /* can be defined externally */
+#	define XXH_FORCE_NATIVE_FORMAT 0
+#	define XXH_CPU_LITTLE_ENDIAN 1
 #endif
 
 
@@ -88,34 +89,30 @@ You can contact the author at :
 * or when alignment doesn't matter for performance.
 */
 #ifndef XXH_FORCE_ALIGN_CHECK /* can be defined externally */
-#  if defined(__i386) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_X64)
-#    define XXH_FORCE_ALIGN_CHECK 0
-#  else
-#    define XXH_FORCE_ALIGN_CHECK 1
-#  endif
+#	if defined(__i386) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_X64)
+#		define XXH_FORCE_ALIGN_CHECK 0
+#	else
+#		define XXH_FORCE_ALIGN_CHECK 1
+#	endif
 #endif
 
+/*!XXH_CPU_LITTLE_ENDIAN :
+* This is a CPU endian detection macro, will be
+* automatically set to 1 (little endian) if XXH_FORCE_NATIVE_FORMAT
+* is left undefined, XXH_FORCE_NATIVE_FORMAT is defined to 0, or if an x86/x86_64 compiler macro is defined.
+* If left undefined, endianness will be determined at runtime, at the cost of a slight one-time overhead
+* and a larger overhead due to get_endian() not being constexpr.
+*/
+#ifndef XXH_CPU_LITTLE_ENDIAN
+#	if defined(__i386) || defined(_M_IX86) || defined(__x86_64__) || defined(_M_X64)
+#		define XXH_CPU_LITTLE_ENDIAN 1
+#	endif
+#endif
 
 /* *************************************
 *  Compiler Specific Options
 ***************************************/
 #define XXH_GCC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
-
-/*
-#ifdef _MSC_VER     Visual Studio 
-#  pragma warning(disable : 4127)       disable: C4127: conditional expression is constant 
-#  define XXH_FORCE_STATIC_INLINE static inline
-#  define XXH_FORCE_INLINE inline
-#else 
-#  ifdef __GNUC__
-#    define XXH_FORCE_STATIC_INLINE static inline 
-#    define XXH_FORCE_INLINE inline 
-#  else
-#    define XXH_FORCE_STATIC_INLINE static inline
-#    define XXH_FORCE_INLINE inline 
-#  endif
-#endif
-*/
 
 namespace xxh
 {
@@ -274,7 +271,7 @@ namespace xxh
 		constexpr endianness get_endian(endianness endian)
 		{
 			constexpr std::array<endianness, 3> endian_lookup = { endianness::big_endian, endianness::little_endian, (XXH_CPU_LITTLE_ENDIAN) ? endianness::little_endian : endianness::big_endian };
-			return endian_lookup[(uint8_t)endian];
+			return endian_lookup[static_cast<uint8_t>(endian)];
 		}
 
 		constexpr bool is_little_endian()
