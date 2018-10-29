@@ -18,10 +18,29 @@
     <ClInclude Include="xxhash.hpp">
       <Filter>Source Files</Filter>
     </ClInclude>
+    <ClInclude Include="xxhash.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="catch.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="test_main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="xxhash.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".travis.yml">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="makefile">
+      <Filter>Resource Files</Filter>
+    </Text>
   </ItemGroup>
 </Project>

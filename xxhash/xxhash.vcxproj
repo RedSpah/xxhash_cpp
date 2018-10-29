@@ -94,6 +94,10 @@
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
+copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -107,6 +111,10 @@
     <Link>
       <SubSystem>Console</SubSystem>
     </Link>
+    <PreBuildEvent>
+      <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
+copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -124,6 +132,10 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent>
+      <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
+copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <ClCompile>
@@ -141,12 +153,25 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
     </Link>
+    <PreBuildEvent>
+      <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
+copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
+    </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="catch.hpp" />
+    <ClInclude Include="xxhash.h" />
     <ClInclude Include="xxhash.hpp" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="test_main.cpp" />
+    <ClCompile Include="xxhash.c" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".travis.yml" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="makefile" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
