@@ -4,4 +4,4 @@ OBJ = test_main.o
 	$(CXX) -c -o $@ $< $(CPPVERFLAG) $(EXTRAARGS)
 
 cpplinqmake: $(OBJ)
-$(CXX) -o test $^ -I. -Wall -Wextra $(CPPVERFLAG) $(EXTRAARGS) $(LIBS)
+	$(CXX) -o test $^ -I. -Wall -Wextra $(CPPVERFLAG) $(EXTRAARGS) $(LIBS)
