@@ -19,7 +19,7 @@ template <typename T>
 std::string byte_print(T val)
 {
 	constexpr std::array<char, 16> hex_digits = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
-	const uint8_t* inspect_ptr = reinterpret_cast<const uint8_t*>(&val);
+	const uint8_t* inspect_ptr = reinterpret_cast<const uint8_t*>(&val); 
 	std::string output = "";
 	for (int i = 0; i < sizeof(T); i++)
 	{

@@ -166,7 +166,7 @@ namespace xxh
 		XXH_FORCE_STATIC_INLINE uint64_t rotl64(uint64_t x, int32_t r) { return _rotl64(x, r); }
 #else
 		XXH_FORCE_STATIC_INLINE uint32_t rotl32(uint32_t x, int32_t r) { return ((x << r) | (x >> (32 - r))); }
-		XXH_FORCE_STATIC_INLINE uint32_t rotl64(uint64_t x, int32_t r) { return ((x << r) | (x >> (64 - r))); }
+		XXH_FORCE_STATIC_INLINE uint64_t rotl64(uint64_t x, int32_t r) { return ((x << r) | (x >> (64 - r))); }
 #endif
 
 #if defined(_MSC_VER)     /* Visual Studio */
