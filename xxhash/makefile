@@ -1,4 +1,4 @@
-OBJ = test_main.o 
+OBJ = test_main.o xxhash.o
 
 %.o: %.cpp 
 	$(CXX) -c -o $@ $< $(CPPVERFLAG) $(EXTRAARGS)
