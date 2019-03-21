@@ -1,5 +1,5 @@
 # xxhash_cpp
-Port of the xxHash library to C++17.
+Port of the xxHash library to C++14.
 
 [![Build Status](https://travis-ci.org/RedSpah/xxhash_cpp.svg?branch=master)](https://travis-ci.org/RedSpah/xxhash_cpp)
 
@@ -7,10 +7,10 @@ Compatibility
 ----
 | Compiler             | Min. Version        | 
 |----------------------|:-------------------:|
-| MSVC (Visual Studio) | 19.1 (VS 2017.3 P2) | 
-| clang                | 3.9                 | 
-| gcc                  | 7                   |
-| EDG eccp             | 4.14                |
+| MSVC (Visual Studio) | 19.0 (VS 2017)      | 
+| clang                | 3.4                 | 
+| gcc                  | 5                   |
+| Intel C++            | 17.0                |
 
 Example Usage
 ----
