@@ -161,37 +161,52 @@ namespace xxh
 		******************************************/
 
 #if defined(_MSC_VER)
-		static inline uint32_t rotl32(uint32_t x, int32_t r) { return _rotl(x, r); }
-		static inline uint64_t rotl64(uint64_t x, int32_t r) { return _rotl64(x, r); }
+		inline uint32_t rotl32(uint32_t x, int32_t r) { return _rotl(x, r); }
+		inline uint64_t rotl64(uint64_t x, int32_t r) { return _rotl64(x, r); }
 #else
-		static inline uint32_t rotl32(uint32_t x, int32_t r) { return ((x << r) | (x >> (32 - r))); }
-		static inline uint64_t rotl64(uint64_t x, int32_t r) { return ((x << r) | (x >> (64 - r))); }
+		inline uint32_t rotl32(uint32_t x, int32_t r) { return ((x << r) | (x >> (32 - r))); }
+		inline uint64_t rotl64(uint64_t x, int32_t r) { return ((x << r) | (x >> (64 - r))); }
 #endif
 
 #if defined(_MSC_VER)     /* Visual Studio */
-		static inline uint32_t swap32(uint32_t x) { return _byteswap_ulong(x); }
-		static inline uint64_t swap64(uint64_t x) { return _byteswap_uint64(x); }
+		inline uint32_t swap32(uint32_t x) { return _byteswap_ulong(x); }
+		inline uint64_t swap64(uint64_t x) { return _byteswap_uint64(x); }
 #elif XXH_GCC_VERSION >= 403
-		static inline uint32_t swap32(uint32_t x) { return __builtin_bswap32(x); }
-		static inline uint64_t swap64(uint64_t x) { return __builtin_bswap64(x); }
+		inline uint32_t swap32(uint32_t x) { return __builtin_bswap32(x); }
+		inline uint64_t swap64(uint64_t x) { return __builtin_bswap64(x); }
 #else
-		static inline uint32_t swap32(uint32_t x) { return ((x << 24) & 0xff000000) | ((x << 8) & 0x00ff0000) | ((x >> 8) & 0x0000ff00) | ((x >> 24) & 0x000000ff); }
-		static inline uint64_t swap64(uint64_t x) { return ((x << 56) & 0xff00000000000000ULL) | ((x << 40) & 0x00ff000000000000ULL) | ((x << 24) & 0x0000ff0000000000ULL) | ((x << 8) & 0x000000ff00000000ULL) | ((x >> 8) & 0x00000000ff000000ULL) | ((x >> 24) & 0x0000000000ff0000ULL) | ((x >> 40) & 0x000000000000ff00ULL) | ((x >> 56) & 0x00000000000000ffULL); }
+		inline uint32_t swap32(uint32_t x) { return ((x << 24) & 0xff000000) | ((x << 8) & 0x00ff0000) | ((x >> 8) & 0x0000ff00) | ((x >> 24) & 0x000000ff); }
+		inline uint64_t swap64(uint64_t x) { return ((x << 56) & 0xff00000000000000ULL) | ((x << 40) & 0x00ff000000000000ULL) | ((x << 24) & 0x0000ff0000000000ULL) | ((x << 8) & 0x000000ff00000000ULL) | ((x >> 8) & 0x00000000ff000000ULL) | ((x >> 24) & 0x0000000000ff0000ULL) | ((x >> 40) & 0x000000000000ff00ULL) | ((x >> 56) & 0x00000000000000ffULL); }
 #endif
+		template <size_t N>
+		inline hash_t<N> rotl(hash_t<N> n, int32_t r) {};
+
+		template <>
+		inline hash_t<32> rotl<32>(hash_t<32> n, int32_t r)
+		{
+			return rotl32(n, r);
+		};
+
+		template <>
+		inline hash_t<64> rotl<64>(hash_t<64> n, int32_t r)
+		{
+			return rotl64(n, r);
+		};
 
 		template <size_t N>
-		static inline hash_t<N> rotl(hash_t<N> n, int32_t r)
-		{
-			if constexpr (N == 32) { return rotl32(n, r); }
-			else { return rotl64(n, r); }
-		}
+		inline hash_t<N> swap(hash_t<N> n) {};
 
-		template <size_t N>
-		static inline hash_t<N> swap(hash_t<N> x)
+		template <>
+		inline hash_t<32> swap<32>(hash_t<32> n)
 		{
-			if constexpr (N == 32) { return swap32(x); }
-			else { return swap64(x); }
-		}
+			return swap32(n);
+		};
+
+		template <>
+		inline hash_t<64> swap<64>(hash_t<64> n)
+		{
+			return swap64(n);
+		};
 	}
 
 	/* *************************************
@@ -210,7 +225,7 @@ namespace xxh
 
 		/* Force direct memory access. Only works on CPU which support unaligned memory access in hardware */
 		template <size_t N>
-		static inline hash_t<N> read_unaligned(const void* memPtr) { return *(const hash_t<N>*)memPtr; }
+		inline hash_t<N> read_unaligned(const void* memPtr) { return *(const hash_t<N>*)memPtr; }
 
 #elif (defined(XXH_FORCE_MEMORY_ACCESS) && (XXH_FORCE_MEMORY_ACCESS==1))
 
@@ -220,14 +235,14 @@ namespace xxh
 		using unalign = union { hash_t<N> uval; } __attribute((packed));
 
 		template <size_t N>
-		static inline hash_t<N> read_unaligned(const void* memPtr) { return ((const unalign*)memPtr)->uval; }
+		inline hash_t<N> read_unaligned(const void* memPtr) { return ((const unalign*)memPtr)->uval; }
 #else
 
 		/* portable and safe solution. Generally efficient.
 		* see : http://stackoverflow.com/a/32095106/646947
 		*/
 		template <size_t N>
-		static inline hash_t<N> read_unaligned(const void* memPtr)
+		inline hash_t<N> read_unaligned(const void* memPtr)
 		{
 			hash_t<N> val;
 			memcpy(&val, memPtr, sizeof(val));
@@ -236,8 +251,8 @@ namespace xxh
 
 #endif   /* XXH_FORCE_DIRECT_MEMORY_ACCESS */
 
-		static inline hash_t<32> read32(const void* memPtr) { return read_unaligned<32>(memPtr); }
-		static inline hash_t<64> read64(const void* memPtr) { return read_unaligned<64>(memPtr); }
+		inline hash_t<32> read32(const void* memPtr) { return read_unaligned<32>(memPtr); }
+		inline hash_t<64> read64(const void* memPtr) { return read_unaligned<64>(memPtr); }
 
 		/* *************************************
 		*  Architecture Macros
@@ -247,7 +262,7 @@ namespace xxh
 
 #ifndef XXH_CPU_LITTLE_ENDIAN
 
-		static inline endianness get_endian(endianness endian)
+		inline endianness get_endian(endianness endian)
 		{
 			static struct _dummy_t
 			{
@@ -262,7 +277,7 @@ namespace xxh
 			return _dummy.endian_lookup[(uint8_t)endian];
 		}
 
-		static inline bool is_little_endian()
+		inline bool is_little_endian()
 		{
 			return get_endian(endianness::unspecified) == endianness::little_endian;
 		}
@@ -289,7 +304,7 @@ namespace xxh
 
 
 		template <size_t N>
-		static inline hash_t<N> readLE_align(const void* ptr, endianness endian, alignment align)
+		inline hash_t<N> readLE_align(const void* ptr, endianness endian, alignment align)
 		{
 			if (align == alignment::unaligned)
 			{
@@ -302,19 +317,19 @@ namespace xxh
 		}
 
 		template <size_t N>
-		static inline hash_t<N> readLE(const void* ptr, endianness endian)
+		inline hash_t<N> readLE(const void* ptr, endianness endian)
 		{
 			return readLE_align<N>(ptr, endian, alignment::unaligned);
 		}
 
 		template <size_t N>
-		static inline hash_t<N> readBE(const void* ptr)
+		inline hash_t<N> readBE(const void* ptr)
 		{
 			return is_little_endian() ? bit_ops::swap<N>(read_unaligned<N>(ptr)) : read_unaligned<N>(ptr);
 		}
 
 		template <size_t N>
-		static inline alignment get_alignment(const void* input)
+		inline alignment get_alignment(const void* input)
 		{
 			return ((XXH_FORCE_ALIGN_CHECK) && ((reinterpret_cast<uintptr_t>(input) & ((N / 8) - 1)) == 0)) ? xxh::alignment::aligned : xxh::alignment::unaligned;
 		}
@@ -333,16 +348,23 @@ namespace xxh
 		constexpr static std::array<hash32_t, 5> primes32 = { 2654435761U, 2246822519U, 3266489917U, 668265263U, 374761393U };
 		constexpr static std::array<hash64_t, 5> primes64 = { 11400714785074694791ULL, 14029467366897019727ULL, 1609587929392839161ULL, 9650029242287828579ULL, 2870177450012600261ULL };
 
-		template <size_t N>
-		constexpr hash_t<N> PRIME(int32_t n)
+		template <size_t N> 
+		constexpr hash_t<N> PRIME(int32_t n) {};
+
+		template <>
+		constexpr hash32_t PRIME<32>(int32_t n)
 		{
-			if constexpr (N == 32) return primes32[n - 1];
-			else if constexpr (N == 64) return primes64[n - 1];
-			return 0;
+			return primes32[n - 1];
+		}
+
+		template <>
+		constexpr hash64_t PRIME<64>(int32_t n)
+		{
+			return primes64[n - 1];
 		}
 
 		template <size_t N>
-		static inline hash_t<N> round(hash_t<N> seed, hash_t<N> input)
+		inline hash_t<N> round(hash_t<N> seed, hash_t<N> input)
 		{
 			seed += input * PRIME<N>(2);
 			seed = bit_ops::rotl<N>(seed, ((N == 32) ? 13 : 31));
@@ -350,7 +372,7 @@ namespace xxh
 			return seed;
 		}
 
-		static inline hash64_t mergeRound64(hash64_t acc, hash64_t val)
+		inline hash64_t mergeRound64(hash64_t acc, hash64_t val)
 		{
 			val = round<64>(0, val);
 			acc ^= val;
@@ -359,7 +381,82 @@ namespace xxh
 		}
 
 		template <size_t N>
-		static inline hash_t<N> endian_align(const void* input, size_t len, hash_t<N> seed, xxh::endianness endian, xxh::alignment align)
+		inline void endian_align_sub_mergeround([[maybe_unused]] hash_t<N>& hash_ret, hash_t<N> v1, hash_t<N> v2, hash_t<N> v3, hash_t<N> v4) {};
+
+		template <>
+		inline void endian_align_sub_mergeround<64>(hash_t<64>& hash_ret, hash_t<64> v1, hash_t<64> v2, hash_t<64> v3, hash_t<64> v4)
+		{
+			hash_ret = mergeRound64(hash_ret, v1);
+			hash_ret = mergeRound64(hash_ret, v2);
+			hash_ret = mergeRound64(hash_ret, v3);
+			hash_ret = mergeRound64(hash_ret, v4);
+		}
+
+		template <size_t N>
+		inline hash_t<N> endian_align_sub_ending(hash_t<N> hash_ret, const uint8_t* p, const uint8_t* bEnd, xxh::endianness endian, xxh::alignment align) {};
+
+		template <>
+		inline hash_t<32> endian_align_sub_ending<32>(hash_t<32> hash_ret, const uint8_t* p, const uint8_t* bEnd, xxh::endianness endian, xxh::alignment align)
+		{
+			while ((p + 4) <= bEnd)
+			{
+				hash_ret += mem_ops::readLE_align<32>(p, endian, align) * PRIME<32>(3);
+				hash_ret = bit_ops::rotl<32>(hash_ret, 17) * PRIME<32>(4);
+				p += 4;
+			}
+
+			while (p < bEnd)
+			{
+				hash_ret += (*p) * PRIME<32>(5);
+				hash_ret = bit_ops::rotl<32>(hash_ret, 11) * PRIME<32>(1);
+				p++;
+			}
+
+			hash_ret ^= hash_ret >> 15;
+			hash_ret *= PRIME<32>(2);
+			hash_ret ^= hash_ret >> 13;
+			hash_ret *= PRIME<32>(3);
+			hash_ret ^= hash_ret >> 16;
+
+			return hash_ret;
+		}
+
+		template <>
+		inline hash_t<64> endian_align_sub_ending<64>(hash_t<64> hash_ret, const uint8_t* p, const uint8_t* bEnd, xxh::endianness endian, xxh::alignment align)
+		{
+			while (p + 8 <= bEnd)
+			{
+				const hash64_t k1 = round<64>(0, mem_ops::readLE_align<64>(p, endian, align));
+				hash_ret ^= k1;
+				hash_ret = bit_ops::rotl<64>(hash_ret, 27) * PRIME<64>(1) + PRIME<64>(4);
+				p += 8;
+			}
+
+			if (p + 4 <= bEnd)
+			{
+				hash_ret ^= static_cast<hash64_t>(mem_ops::readLE_align<32>(p, endian, align)) * PRIME<64>(1);
+				hash_ret = bit_ops::rotl<64>(hash_ret, 23) * PRIME<64>(2) + PRIME<64>(3);
+				p += 4;
+			}
+
+			while (p < bEnd)
+			{
+				hash_ret ^= (*p) * PRIME<64>(5);
+				hash_ret = bit_ops::rotl<64>(hash_ret, 11) * PRIME<64>(1);
+				p++;
+			}
+
+			hash_ret ^= hash_ret >> 33;
+			hash_ret *= PRIME<64>(2);
+			hash_ret ^= hash_ret >> 29;
+			hash_ret *= PRIME<64>(3);
+			hash_ret ^= hash_ret >> 32;
+
+			return hash_ret;
+		}
+
+		template <size_t N>
+		inline hash_t<N> endian_align(const void* input, size_t len, hash_t<N> seed, xxh::endianness endian, xxh::alignment align)
 		{
 			static_assert(!(N != 32 && N != 64), "You can only call endian_align in 32 or 64 bit mode.");
 
@@ -385,74 +482,14 @@ namespace xxh
 
 				hash_ret = bit_ops::rotl<N>(v1, 1) + bit_ops::rotl<N>(v2, 7) + bit_ops::rotl<N>(v3, 12) + bit_ops::rotl<N>(v4, 18);
 
-				if constexpr (N == 64)
-				{
-					hash_ret = mergeRound64(hash_ret, v1);
-					hash_ret = mergeRound64(hash_ret, v2);
-					hash_ret = mergeRound64(hash_ret, v3);
-					hash_ret = mergeRound64(hash_ret, v4);
-				}
+				endian_align_sub_mergeround<N>(hash_ret, v1, v2, v3, v4);
 			}
 			else { hash_ret = seed + PRIME<N>(5); }
 
 			hash_ret += static_cast<hash_t<N>>(len);
 
-			if constexpr (N == 64)
-			{
-				while (p + 8 <= bEnd)
-				{
-					const hash64_t k1 = round<64>(0, mem_ops::readLE_align<64>(p, endian, align));
-					hash_ret ^= k1;
-					hash_ret = bit_ops::rotl<64>(hash_ret, 27) * PRIME<64>(1) + PRIME<64>(4);
-					p += 8;
-				}
-
-				if (p + 4 <= bEnd)
-				{
-					hash_ret ^= static_cast<hash64_t>(mem_ops::readLE_align<32>(p, endian, align)) * PRIME<64>(1);
-					hash_ret = bit_ops::rotl<64>(hash_ret, 23) * PRIME<64>(2) + PRIME<64>(3);
-					p += 4;
-				}
-
-				while (p < bEnd)
-				{
-					hash_ret ^= (*p) * PRIME<64>(5);
-					hash_ret = bit_ops::rotl<64>(hash_ret, 11) * PRIME<64>(1);
-					p++;
-				}
-
-				hash_ret ^= hash_ret >> 33;
-				hash_ret *= PRIME<64>(2);
-				hash_ret ^= hash_ret >> 29;
-				hash_ret *= PRIME<64>(3);
-				hash_ret ^= hash_ret >> 32;
-			}
-			else
-			{
-				while ((p + 4) <= bEnd)
-				{
-					hash_ret += mem_ops::readLE_align<32>(p, endian, align) * PRIME<32>(3);
-					hash_ret = bit_ops::rotl<32>(hash_ret, 17) * PRIME<32>(4);
-					p += 4;
-				}
-
-				while (p < bEnd)
-				{
-					hash_ret += (*p) * PRIME<32>(5);
-					hash_ret = bit_ops::rotl<32>(hash_ret, 11) * PRIME<32>(1);
-					p++;
-				}
-
-				hash_ret ^= hash_ret >> 15;
-				hash_ret *= PRIME<32>(2);
-				hash_ret ^= hash_ret >> 13;
-				hash_ret *= PRIME<32>(3);
-				hash_ret ^= hash_ret >> 16;
-			}
-
-			return hash_ret;
+			return endian_align_sub_ending<N>(hash_ret, p, bEnd, endian, align);			
 		}
-
 	}
 
 	template <size_t N>
@@ -574,70 +611,13 @@ namespace xxh
 			{
 				hash_ret = bit_ops::rotl<N>(v1, 1) + bit_ops::rotl<N>(v2, 7) + bit_ops::rotl<N>(v3, 12) + bit_ops::rotl<N>(v4, 18);
 
-				if constexpr (N == 64)
-				{
-					hash_ret = detail::mergeRound64(hash_ret, v1);
-					hash_ret = detail::mergeRound64(hash_ret, v2);
-					hash_ret = detail::mergeRound64(hash_ret, v3);
-					hash_ret = detail::mergeRound64(hash_ret, v4);
-				}
+				detail::endian_align_sub_mergeround<N>(hash_ret, v1, v2, v3, v4);
 			}
 			else { hash_ret = v3 + detail::PRIME<N>(5); }
 
 			hash_ret += static_cast<hash_t<N>>(total_len);
 
-			if constexpr (N == 64)
-			{
-
-				while (p + 8 <= bEnd) {
-					const hash64_t k1 = detail::round<64>(0, mem_ops::readLE<64>(p, endian));
-					hash_ret ^= k1;
-					hash_ret = bit_ops::rotl<64>(hash_ret, 27) * detail::PRIME<64>(1) + detail::PRIME<64>(4);
-					p += 8;
-				}
-
-				if (p + 4 <= bEnd) {
-					hash_ret ^= static_cast<hash64_t>(mem_ops::readLE<32>(p, endian)) * detail::PRIME<64>(1);
-					hash_ret = bit_ops::rotl<64>(hash_ret, 23) * detail::PRIME<64>(2) + detail::PRIME<64>(3);
-					p += 4;
-				}
-
-				while (p < bEnd) {
-					hash_ret ^= (*p) * detail::PRIME<64>(5);
-					hash_ret = bit_ops::rotl<64>(hash_ret, 11) * detail::PRIME<64>(1);
-					p++;
-				}
-
-				hash_ret ^= hash_ret >> 33;
-				hash_ret *= detail::PRIME<64>(2);
-				hash_ret ^= hash_ret >> 29;
-				hash_ret *= detail::PRIME<64>(3);
-				hash_ret ^= hash_ret >> 32;
-			}
-			else
-			{
-				while (p + 4 <= bEnd)
-				{
-					hash_ret += mem_ops::readLE<32>(p, endian) * detail::PRIME<32>(3);
-					hash_ret = bit_ops::rotl<32>(hash_ret, 17) * detail::PRIME<32>(4);
-					p += 4;
-				}
-
-				while (p < bEnd)
-				{
-					hash_ret += (*p) * detail::PRIME<32>(5);
-					hash_ret = bit_ops::rotl<32>(hash_ret, 11) * detail::PRIME<32>(1);
-					p++;
-				}
-
-				hash_ret ^= hash_ret >> 15;
-				hash_ret *= detail::PRIME<32>(2);
-				hash_ret ^= hash_ret >> 13;
-				hash_ret *= detail::PRIME<32>(3);
-				hash_ret ^= hash_ret >> 16;
-			}
-
-			return hash_ret;
+			return detail::endian_align_sub_ending<N>(hash_ret, p, bEnd, endian, alignment::unaligned);
 		}
 
 	public:
@@ -718,7 +698,9 @@ namespace xxh
 	template <size_t N>
 	struct canonical_t
 	{
-		std::array<uint8_t, N / 8> digest;
+		std::array<uint8_t, N / 8> digest;\
+
+
 
 		canonical_t(hash_t<N> hash)
 		{
@@ -728,7 +710,7 @@ namespace xxh
 
 		hash_t<N> get_hash() const
 		{
-			return mem_ops::readBE<64>(&digest);
+			return mem_ops::readBE<N>(&digest);
 		}
 	};
 

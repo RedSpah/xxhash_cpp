@@ -307,6 +307,8 @@ TEST_CASE("Results are the same as the original implementation for large, random
 	std::minstd_rand rng(std::chrono::system_clock::now().time_since_epoch().count());
 	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
 
+	
+
 	for (int i = 0; i < test_num; i++)
 	{
 		std::vector<uint32_t> input_buffer;
@@ -316,8 +318,37 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		uint64_t seed = ((static_cast<uint64_t>(dist(rng)) << 32) + dist(rng));
 
+		xxh::hash_state32_t hash_state_32_cpp(seed);
+		xxh::hash_state64_t hash_state_64_cpp(seed);
+		XXH32_state_t* hash_state_32_c = XXH32_createState();
+		XXH64_state_t* hash_state_64_c = XXH64_createState();
+
+		XXH32_reset(hash_state_32_c, seed);
+		XXH64_reset(hash_state_64_c, seed);
+
+		hash_state_32_cpp.update(input_buffer);
+		hash_state_64_cpp.update(input_buffer);
+
+		XXH32_update(hash_state_32_c, input_buffer.data(), test_buf_size * sizeof(uint32_t));
+		XXH64_update(hash_state_64_c, input_buffer.data(), test_buf_size * sizeof(uint32_t));
+
+		xxh::canonical32_t canonical_32_cpp(xxh::xxhash<32>(input_buffer, seed));
+		xxh::canonical64_t canonical_64_cpp(xxh::xxhash<64>(input_buffer, seed));
+
+		XXH32_canonical_t canonical_32_c;
+		XXH64_canonical_t canonical_64_c;
+
+		XXH32_canonicalFromHash(&canonical_32_c, XXH32(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed));
+		XXH64_canonicalFromHash(&canonical_64_c, XXH64(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed));
+
 		REQUIRE(XXH64(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<64>(input_buffer, seed));
 		REQUIRE(XXH32(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<32>(input_buffer, seed));
+
+		REQUIRE(XXH32_digest(hash_state_32_c) == hash_state_32_cpp.digest());
+		REQUIRE(XXH64_digest(hash_state_64_c) == hash_state_64_cpp.digest());
+
+		REQUIRE(XXH32_hashFromCanonical(&canonical_32_c) == canonical_32_cpp.get_hash());
+		REQUIRE(XXH64_hashFromCanonical(&canonical_64_c) == canonical_64_cpp.get_hash());
 	}
 }
 
