@@ -1,6 +1,8 @@
 # xxhash_cpp
 Port of the xxHash library to C++17.
 
+[![Build Status](https://travis-ci.org/RedSpah/xxhash_cpp.svg?branch=master)](https://travis-ci.org/RedSpah/xxhash_cpp)
+
 Compatibility
 ----
 | Compiler             | Min. Version        | 
