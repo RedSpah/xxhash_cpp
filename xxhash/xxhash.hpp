@@ -348,7 +348,7 @@ namespace xxh
 		constexpr static std::array<hash32_t, 5> primes32 = { 2654435761U, 2246822519U, 3266489917U, 668265263U, 374761393U };
 		constexpr static std::array<hash64_t, 5> primes64 = { 11400714785074694791ULL, 14029467366897019727ULL, 1609587929392839161ULL, 9650029242287828579ULL, 2870177450012600261ULL };
 
-		template <size_t N> 
+		template <size_t N>
 		constexpr hash_t<N> PRIME(int32_t n) {};
 
 		template <>
@@ -488,7 +488,7 @@ namespace xxh
 
 			hash_ret += static_cast<hash_t<N>>(len);
 
-			return endian_align_sub_ending<N>(hash_ret, p, bEnd, endian, align);			
+			return endian_align_sub_ending<N>(hash_ret, p, bEnd, endian, align);
 		}
 	}
 
@@ -546,7 +546,7 @@ namespace xxh
 
 		uint64_t total_len = 0;
 		hash_t<N> v1 = 0, v2 = 0, v3 = 0, v4 = 0;
-		std::array<hash_t<N>, 4> mem = { 0,0,0,0 };
+		std::array<hash_t<N>, 4> mem = {{ 0,0,0,0 }};
 		uint32_t memsize = 0;
 
 		inline error_code _update_impl(const void* input, size_t length, endianness endian)
