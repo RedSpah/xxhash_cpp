@@ -8,6 +8,20 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-5']
+      env: COMPILER=g++-5 CPPVERFLAG=-std=c++17
+
+    - compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
+          packages: ['g++-6']
+      env: COMPILER=g++-6 CPPVERFLAG=-std=c++17
+
+    - compiler: gcc
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-7']
       env: COMPILER=g++-7 CPPVERFLAG=-std=c++17
 
@@ -17,6 +31,13 @@ matrix:
           sources: ['ubuntu-toolchain-r-test']
           packages: ['g++-8']
       env: COMPILER=g++-8 CPPVERFLAG=-std=c++17
+
+    - compiler: clang
+      addons:
+        apt:
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-3.9']
+          packages: ['clang-3.9', 'g++-6']
+      env: COMPILER=clang++-3.9 CPPVERFLAG=-std=c++17
 
     - compiler: clang
       addons:
