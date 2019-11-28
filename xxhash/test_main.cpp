@@ -34,7 +34,7 @@ std::string byte_print(T val)
 	}
 	return output;
 }
-
+	
 #define STRINGIFY(x) #x
 #define TO_STRING(s) STRINGIFY(s)
 #define RAW_PRINT(...) std::cout << std::left << std::setw(50) << TO_STRING(__VA_ARGS__) " == " << byte_print((__VA_ARGS__)) << "\n";
@@ -344,8 +344,8 @@ TEST_CASE("Results are the same as the original implementation for small inputs"
 
 TEST_CASE("Results are the same as the original implementation for large, randomly generated inputs", "[compatibility]")
 {
-	constexpr int32_t test_num = 64;
-	constexpr size_t test_buf_size = (1 << 20);
+	constexpr int32_t test_num = 1024;
+	constexpr size_t test_buf_size = (1 << 16);
 
 	std::minstd_rand rng(std::chrono::system_clock::now().time_since_epoch().count());
 	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
@@ -354,7 +354,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 	for (int i = 0; i < test_num; i++)
 	{
-		std::vector<uint32_t> input_buffer;
+		std::vector<uint32_t> input_buffer;	
 
 		std::array<uint8_t, xxh::detail3::secret_size_min> secret_min_size;
 		std::array<uint8_t, xxh::detail3::secret_default_size> secret_default_size;
