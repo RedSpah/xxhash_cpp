@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26430.15
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29409.12
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "xxhash", "xxhash\xxhash.vcxproj", "{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}"
 EndProject
@@ -9,6 +9,8 @@ Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|x64 = Debug|x64
 		Debug|x86 = Debug|x86
+		Rel_x64_noAVX|x64 = Rel_x64_noAVX|x64
+		Rel_x64_noAVX|x86 = Rel_x64_noAVX|x86
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
 	EndGlobalSection
@@ -17,6 +19,10 @@ Global
 		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Debug|x64.Build.0 = Debug|x64
 		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Debug|x86.ActiveCfg = Debug|Win32
 		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Debug|x86.Build.0 = Debug|Win32
+		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Rel_x64_noAVX|x64.ActiveCfg = Rel_x64_noAVX|x64
+		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Rel_x64_noAVX|x64.Build.0 = Rel_x64_noAVX|x64
+		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Rel_x64_noAVX|x86.ActiveCfg = Rel_x64_noAVX|Win32
+		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Rel_x64_noAVX|x86.Build.0 = Rel_x64_noAVX|Win32
 		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Release|x64.ActiveCfg = Release|x64
 		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Release|x64.Build.0 = Release|x64
 		{31B3C2FE-C3E5-4FEE-B6AD-D424D9D0A2F1}.Release|x86.ActiveCfg = Release|Win32
@@ -24,5 +30,8 @@ Global
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E3E3B0F7-CE91-44ED-9586-5DEBA9785CBF}
 	EndGlobalSection
 EndGlobal
