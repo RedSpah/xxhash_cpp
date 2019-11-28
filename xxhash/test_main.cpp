@@ -8,6 +8,29 @@
 #include <cmath>
 #include <stdlib.h>
 
+#ifdef __GNUC__
+#include <stdio.h>
+#include <execinfo.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+void handler(int sig) {
+	void* arr_[16];
+	size_t size;
+
+	// get void*'s for all entries on the stack
+	size = backtrace(arr_, 16);
+
+	// print out all the frames to stderr
+	fprintf(stderr, "Error: signal %d:\n", sig);
+	backtrace_symbols_fd(arr_, size, STDERR_FILENO);
+	exit(1);
+}
+
+
+#endif
+
 
 
 #define XXH_STATIC_LINKING_ONLY
@@ -102,6 +125,10 @@ bool operator == (XXH128_hash_t h1, xxh::hash128_t h2)
 
 int main(int argc, char** argv)
 {
+#ifdef __GNU_C__
+	signal(SIGSEGV, handler);
+#endif
+
 	int res = Catch::Session().run(argc, argv);
 
 	/*
