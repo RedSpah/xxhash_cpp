@@ -328,6 +328,20 @@ namespace xxh
 		};
 
 		template <size_t N>
+		inline uint_t<N> rotr(uint_t<N> n, int32_t r)
+		{
+			if constexpr (N == 32)
+			{
+				return intrin::bit_ops::rotr32(n, r);
+			}
+
+			if constexpr (N == 64)
+			{
+				return intrin::bit_ops::rotr64(n, r);
+			}
+		};
+
+		template <size_t N>
 		inline uint_t<N> swap(hash_t<N> n) 
 		{
 			if constexpr (N == 32)
@@ -1548,7 +1562,7 @@ namespace xxh
 			}
 		}
 
-		__declspec(noinline) error_code update_impl(const void* input_, size_t len)
+		error_code update_impl(const void* input_, size_t len)
 		{
 			detail3::acc_width accWidth = (N == 64) ? detail3::acc_width::acc_64bits : detail3::acc_width::acc_128bits;
 
@@ -1699,17 +1713,17 @@ namespace xxh
 			detail3::acc_width accWidth = (N == 64) ? detail3::acc_width::acc_64bits : detail3::acc_width::acc_128bits;
 
 			if (totalLen > detail3::midsize_max) {
-				alignas(detail3::acc_align) XXH64_hash_t acc[detail3::acc_nb];
+				alignas(detail3::acc_align) hash64_t acc[detail3::acc_nb];
 				digest_long(acc, accWidth);
 
 				if constexpr (N == 64)
 				{
-					return detail3::merge_accs(acc, secret + detail3::secret_mergeaccs_start, (xxh_u64)totalLen * detail::PRIME<64>(1));
+					return detail3::merge_accs(acc, secret + detail3::secret_mergeaccs_start, (uint64_t)totalLen * detail::PRIME<64>(1));
 				}
 				else
 				{
-					uint64_t const low64 = detail3::merge_accs(acc, secret + detail3::secret_mergeaccs_start, (xxh_u64)totalLen * detail::PRIME<64>(1));
-					uint64_t const high64 = detail3::merge_accs(acc, secret + secretLimit + detail3::stripe_len - sizeof(acc) - detail3::secret_mergeaccs_start, ~((xxh_u64)totalLen * detail::PRIME<64>(2)));
+					uint64_t const low64 = detail3::merge_accs(acc, secret + detail3::secret_mergeaccs_start, (uint64_t)totalLen * detail::PRIME<64>(1));
+					uint64_t const high64 = detail3::merge_accs(acc, secret + secretLimit + detail3::stripe_len - sizeof(acc) - detail3::secret_mergeaccs_start, ~((uint64_t)totalLen * detail::PRIME<64>(2)));
 					return  { low64, high64 };
 				}
 			}
