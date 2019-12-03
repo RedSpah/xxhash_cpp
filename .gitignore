@@ -264,3 +264,8 @@ __pycache__/
 */xxhash_c_version.h
 */compatibility_test.cpp
 /xxhash/test_main.cpp
+*.o 
+*.exe 
+*.vcxproj
+*.vcxproj.filters
+*.cmake

@@ -939,7 +939,7 @@ namespace xxh
 			}
 		}
 
-		void accumulate(uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT input, const uint8_t* XXH_RESTRICT secret, size_t nbStripes, acc_width accWidth)
+		static void accumulate(uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT input, const uint8_t* XXH_RESTRICT secret, size_t nbStripes, acc_width accWidth)
 		{
 			for (size_t n = 0; n < nbStripes; n++) {
 				const uint8_t* const in = input + n * stripe_len;
@@ -948,7 +948,7 @@ namespace xxh
 			}
 		}
 
-		void hash_long_internal_loop(uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT input, size_t len, const uint8_t* XXH_RESTRICT secret, size_t secretSize, acc_width accWidth)
+		static void hash_long_internal_loop(uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT input, size_t len, const uint8_t* XXH_RESTRICT secret, size_t secretSize, acc_width accWidth)
 		{
 			size_t const nb_rounds = (secretSize - stripe_len) / secret_consume_rate;
 			size_t const block_len = stripe_len * nb_rounds;
@@ -970,12 +970,12 @@ namespace xxh
 			}
 		}
 
-		uint64_t mix_2_accs(const uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT secret)
+		static uint64_t mix_2_accs(const uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT secret)
 		{
 			return mul128fold64(acc[0] ^ readLE<64>(secret), acc[1] ^ readLE<64>(secret + 8));
 		}
 
-		uint64_t merge_accs(const uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT secret, uint64_t start)
+		static uint64_t merge_accs(const uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT secret, uint64_t start)
 		{
 			uint64_t result64 = start;
 
@@ -987,7 +987,7 @@ namespace xxh
 			return avalanche(result64);
 		}
 
-		void init_custom_secret(uint8_t* customSecret, uint64_t seed64)
+		static void init_custom_secret(uint8_t* customSecret, uint64_t seed64)
 		{
 			for (uint64_t i = 0; i < secret_default_size / 16; i++) {
 				writeLE<64>(customSecret + i * 16, readLE<64>(default_secret + i * 16) + seed64);
@@ -1125,14 +1125,14 @@ namespace xxh
 			}
 		}
 
-		uint64_t mix_16b(const uint8_t* XXH_RESTRICT input, const uint8_t* XXH_RESTRICT secret, hash64_t seed64)
+		static uint64_t mix_16b(const uint8_t* XXH_RESTRICT input, const uint8_t* XXH_RESTRICT secret, hash64_t seed64)
 		{
 			uint64_t const input_lo = readLE<64>(input);
 			uint64_t const input_hi = readLE<64>(input + 8);
 			return mul128fold64(input_lo ^ (readLE<64>(secret) + seed64), input_hi ^ (readLE<64>(secret + 8) - seed64));
 		}
 
-		uint128_t mix_32b(hash128_t acc, const uint8_t* input_1, const uint8_t* input_2, const uint8_t* secret, hash64_t seed)
+		static uint128_t mix_32b(hash128_t acc, const uint8_t* input_1, const uint8_t* input_2, const uint8_t* secret, hash64_t seed)
 		{
 			acc.low64 += mix_16b(input_1, secret + 0, seed);
 			acc.low64 ^= readLE<64>(input_2) + readLE<64>(input_2 + 8);

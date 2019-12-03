@@ -8,6 +8,7 @@
 #include <cmath>
 #include <stdlib.h>
 
+/*
 #ifdef __GNUC__
 #include <stdio.h>
 #include <execinfo.h>
@@ -30,7 +31,7 @@ void handler(int sig) {
 
 
 #endif
-
+*/
 
 
 #define XXH_STATIC_LINKING_ONLY
@@ -75,8 +76,9 @@ bool cmp(T1 a, T2 b)
 }
 
 template <typename T1, typename T2, typename = std::enable_if_t<sizeof(T1) == sizeof(T2)>>
-void cool_cmp(T1 a, T2 b)
+bool cool_cmp(T1 a, T2 b)
 {
+	bool good = true;
 	for (int i = 0; i < sizeof(T1); i++)
 	{
 		uint8_t v1 = *(static_cast<uint8_t*>(static_cast<void*>(&a)) + i);
@@ -84,8 +86,10 @@ void cool_cmp(T1 a, T2 b)
 		if (v1 != v2)
 		{
 			std::cout << "CMP Mismatch at " << i << ": " << byte_print(v1) << " | " << byte_print(v2) << std::endl;
+			good = false;
 		}
 	}
+	return good;
 }
 
 std::string pretty_time(uint64_t ns)
@@ -125,13 +129,13 @@ bool operator == (XXH128_hash_t h1, xxh::hash128_t h2)
 
 int main(int argc, char** argv)
 {
-#ifdef __GNU_C__
-	signal(SIGSEGV, handler);
-#endif
+//#ifdef __GNU_C__
+//	signal(SIGSEGV, handler);
+///#endif
 
 	int res = Catch::Session().run(argc, argv);
 
-	/*
+	
 	std::cout << "Naive Benchmark\n\n";
 	{
 		std::cout << "\n=== 64BIT: ===\n\n";;
@@ -331,7 +335,7 @@ int main(int argc, char** argv)
 			test_buf_size *= 2;
 		}
 	}
-	*/
+	
 
 	std::cin.get();
 	return res;
@@ -535,6 +539,15 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		
 		REQUIRE(XXH32(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<32>(input_buffer, seed));
 		REQUIRE(XXH64(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<64>(input_buffer, seed));
+
+		std::array<int, xxh::detail3::secret_default_size> secret_c, secret_cpp;
+		XXH3_initCustomSecret((uint8_t*)(void*)secret_c.data(), seed);
+		xxh::detail3::init_custom_secret((uint8_t*)(void*)secret_cpp.data(), seed);
+
+		if (cool_cmp(secret_c, secret_cpp))
+		{
+			std::cout << "Secrets Identical.\n";
+		}
 
 		REQUIRE(XXH3_64bits_withSeed(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash3<64>(input_buffer, seed));
 		REQUIRE(XXH3_128bits_withSeed(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash3<128>(input_buffer, seed));

@@ -4,7 +4,7 @@ project(xxhash)
 
 option(XXH_BUILD_TESTS "run tests" ON)
 set(CMAKE_CXX_FLAGS "-O3 -march=native -Wall -Wpedantic -Wextra")
-set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD 17)
 
 add_library(xxhash OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/xxhash/xxhash.cpp)
 

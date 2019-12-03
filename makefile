@@ -1,4 +1,7 @@
 OBJ = test_main.o xxhash.o
+CXX = g++
+CPPVERFLAG = -std=c++17
+EXTRAARGS = -O3
 
 %.o: %.cpp 
 	$(CXX) -c -o $@ $< $(CPPVERFLAG) $(EXTRAARGS)
