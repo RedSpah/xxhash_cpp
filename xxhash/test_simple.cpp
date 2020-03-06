@@ -10,7 +10,7 @@
 
 #define XXH_STATIC_LINKING_ONLY
 
-#define XXH_VECTOR 2
+#define XXH_VECTOR 1
 #include "xxhash.hpp"
 
 #include "xxh3.h"
