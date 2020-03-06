@@ -1,7 +1,6 @@
 --- 
 after_failure: 
-  - "COREFILE=$(find . -maxdepth 1 -name \"core*\" | head -n 1)"
-  - "if [[ -f \"$COREFILE\" ]]; then gdb -c \"$COREFILE\" example -ex \"thread apply all bt\" -ex \"set pagination 0\" -batch; fi"
+  - "gdb $(pwd)/test core -ex \"thread apply all bt\" -ex \"set pagination 0\" -batch"
 before_script: 
   - "ulimit -c unlimited -S"
 dist: bionic
