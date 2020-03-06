@@ -389,8 +389,8 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		xxh::hash_state32_t hash_state_32_cpp(seed);
 		xxh::hash_state64_t hash_state_64_cpp(seed);
-		XXH32_state_t hash_state_32_c;
-		XXH64_state_t hash_state_64_c;
+		alignas(64) XXH32_state_t hash_state_32_c;
+		alignas(64) XXH64_state_t hash_state_64_c;
 
 		XXH32_reset(&hash_state_32_c, seed);
 		XXH64_reset(&hash_state_64_c, seed);
@@ -399,8 +399,8 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		xxh::hash3_state64_t hash3_state_64_cpp_seed(seed);
 		xxh::hash3_state128_t hash3_state_128_cpp_seed(seed);
-		XXH3_state_t hash3_state_64_c_seed;
-		XXH3_state_t hash3_state_128_c_seed;
+		alignas(64) XXH3_state_t hash3_state_64_c_seed;
+		alignas(64) XXH3_state_t hash3_state_128_c_seed;
 
 		XXH3_64bits_reset_withSeed(&hash3_state_64_c_seed, seed);
 		XXH3_128bits_reset_withSeed(&hash3_state_128_c_seed, seed);
@@ -409,8 +409,8 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		xxh::hash3_state64_t hash3_state_64_cpp_secdef(secret_default_size.data(), xxh::detail3::secret_default_size);
 		xxh::hash3_state128_t hash3_state_128_cpp_secdef(secret_default_size.data(), xxh::detail3::secret_default_size);
-		XXH3_state_t hash3_state_64_c_secdef;
-		XXH3_state_t hash3_state_128_c_secdef;
+		alignas(64) XXH3_state_t hash3_state_64_c_secdef;
+		alignas(64) XXH3_state_t hash3_state_128_c_secdef;
 
 		XXH3_64bits_reset_withSecret(&hash3_state_64_c_secdef, secret_default_size.data(), sizeof(secret_default_size));
 		XXH3_128bits_reset_withSecret(&hash3_state_128_c_secdef, secret_default_size.data(), sizeof(secret_default_size));
@@ -419,8 +419,8 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		xxh::hash3_state64_t hash3_state_64_cpp_secplus(secret_plus_size.data(), sizeof(secret_plus_size));
 		xxh::hash3_state128_t hash3_state_128_cpp_secplus( secret_plus_size.data(), sizeof(secret_plus_size));
-		XXH3_state_t hash3_state_64_c_secplus;
-		XXH3_state_t hash3_state_128_c_secplus;
+		alignas(64) XXH3_state_t hash3_state_64_c_secplus;
+		alignas(64) XXH3_state_t hash3_state_128_c_secplus;
 
 		XXH3_64bits_reset_withSecret(&hash3_state_64_c_secplus, secret_plus_size.data(), sizeof(secret_plus_size));
 		XXH3_128bits_reset_withSecret(&hash3_state_128_c_secplus, secret_plus_size.data(), sizeof(secret_plus_size));
@@ -429,8 +429,8 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		xxh::hash3_state64_t hash3_state_64_cpp_secmin(secret_min_size.data(), sizeof(secret_min_size));
 		xxh::hash3_state128_t hash3_state_128_cpp_secmin(secret_min_size.data(), sizeof(secret_min_size));
-		XXH3_state_t hash3_state_64_c_secmin;
-		XXH3_state_t hash3_state_128_c_secmin;
+		alignas(64) XXH3_state_t hash3_state_64_c_secmin;
+		alignas(64) XXH3_state_t hash3_state_128_c_secmin;
 
 		XXH3_64bits_reset_withSecret(&hash3_state_64_c_secmin, secret_min_size.data(), sizeof(secret_min_size));
 		XXH3_128bits_reset_withSecret(&hash3_state_128_c_secmin, secret_min_size.data(), sizeof(secret_min_size));
