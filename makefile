@@ -1,4 +1,4 @@
-OBJ = test_simple.o xxhash.o
+OBJ = test_main.o xxhash.o
 #CXX = g++
 #CPPVERFLAG = -std=c++17
 #EXTRAARGS = -O3 -march=native

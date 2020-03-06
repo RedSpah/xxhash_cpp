@@ -8,41 +8,12 @@
 #include <cmath>
 #include <stdlib.h>
 
-/*
-#ifdef __GNUC__
-#include <stdio.h>
-#include <execinfo.h>
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
-
-void handler(int sig) {
-	void* arr_[16];
-	size_t size;
-
-	// get void*'s for all entries on the stack
-	size = backtrace(arr_, 16);
-
-	// print out all the frames to stderr
-	fprintf(stderr, "Error: signal %d:\n", sig);
-	backtrace_symbols_fd(arr_, size, STDERR_FILENO);
-	exit(1);
-}
-
-
-#endif
-
-
 #define XXH_STATIC_LINKING_ONLY
 
-#define XXH_VECTOR 0
+#define XXH_VECTOR 1
+#include "xxh3.h"
 #include "xxhash.hpp"
 
-
-//#include "xxhash.h"
-//#undef XXH_VECTOR
-
-#include "xxh3.h"
 
 #define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
@@ -132,215 +103,9 @@ bool operator == (XXH128_hash_t h1, xxh::hash128_t h2)
 	return h1.high64 == h2.high64 && h1.low64 == h2.low64;
 }
 
-int main_(int argc, char** argv)
+int main(int argc, char** argv)
 {
-
-	int res = Catch::Session().run(argc, argv);
-
-	/*
-	std::cout << "Naive Benchmark\n\n";
-	{
-		std::cout << "\n=== 64BIT: ===\n\n";;
-
-		constexpr int32_t base_num = (1 << 12);
-		constexpr int32_t base_buf_size = (1 << 16);
-		constexpr int32_t adv_steps = 8;
-
-		int32_t test_buf_size = base_buf_size;
-		int32_t test_num = base_num;
-
-		for (int adv_step = 0; adv_step < adv_steps; adv_step++)
-		{
-			std::minstd_rand rng(std::chrono::system_clock::now().time_since_epoch().count());
-			std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
-
-			std::array<uint64_t, base_num> bench_time_h, bench_time_hpp;
-
-			std::vector<uint32_t> input_buffer;
-			input_buffer.resize(test_buf_size);
-
-			for (int i = 0; i < test_num; i++)
-			{
-
-				std::generate(input_buffer.begin(), input_buffer.end(), [&rng, &dist]() {return dist(rng); });
-				uint64_t seed = ((static_cast<uint64_t>(dist(rng)) << 32) + dist(rng));
-
-				// Each test is ran four time, first with the C version, second with the C++ version, third again with the C version, and fourth with the C++ version. This is done to account for any possible slowdowns caused by cache misses.
-
-				// warmup
-				auto tp_h_1 = std::chrono::system_clock::now();
-				uint64_t res_h = XXH64(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed);
-				auto tp_h_2 = std::chrono::system_clock::now();
-
-				auto tp_hpp_1 = std::chrono::system_clock::now();
-				uint64_t res_hpp = xxh::xxhash<64>(input_buffer, seed);
-				auto tp_hpp_2 = std::chrono::system_clock::now();
-
-				// reality
-				tp_h_1 = std::chrono::system_clock::now();
-				res_h = XXH64(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed);
-				tp_h_2 = std::chrono::system_clock::now();
-
-				bench_time_h[i] = std::chrono::duration_cast<std::chrono::nanoseconds>(tp_h_2 - tp_h_1).count();
-
-				tp_hpp_1 = std::chrono::system_clock::now();
-				res_hpp = xxh::xxhash<64>(input_buffer, seed);
-				tp_hpp_2 = std::chrono::system_clock::now();
-
-				bench_time_hpp[i] = std::chrono::duration_cast<std::chrono::nanoseconds>(tp_hpp_2 - tp_hpp_1).count();
-
-				if (res_h != res_hpp)
-				{
-					std::cout << "ERROR: adv_step: " << adv_step << " i: " << i << " | res_h: " << res_h << " | res_hpp: " << res_hpp << "\n";
-				}
-			}
-
-			uint64_t min_h = *std::min_element(bench_time_h.begin(), bench_time_h.begin() + test_num);
-			uint64_t min_hpp = *std::min_element(bench_time_hpp.begin(), bench_time_hpp.begin() + test_num);
-
-			uint64_t max_h = *std::max_element(bench_time_h.begin(), bench_time_h.begin() + test_num);
-			uint64_t max_hpp = *std::max_element(bench_time_hpp.begin(), bench_time_hpp.begin() + test_num);
-
-			uint64_t total_h = std::accumulate(bench_time_h.begin(), bench_time_h.begin() + test_num, 0ull);
-			uint64_t total_hpp = std::accumulate(bench_time_hpp.begin(), bench_time_hpp.begin() + test_num, 0ull);
-
-			uint64_t mean_h = total_h / test_num;
-			uint64_t mean_hpp = total_hpp / test_num;
-
-			std::sort(bench_time_h.begin(), bench_time_h.begin() + test_num);
-			std::sort(bench_time_hpp.begin(), bench_time_hpp.begin() + test_num);
-
-			uint64_t median_h = bench_time_h[test_num / 2];
-			uint64_t median_hpp = bench_time_hpp[test_num / 2];
-
-			std::cout << "Tests ran: " << test_num << "\nInput buffer size: " << test_buf_size * sizeof(uint32_t) << "\n\n";
-
-			std::cout << "meow_hash.h:\n* Total time: " << pretty_time(total_h) <<
-				"\n* Mean: " << pretty_time(mean_h) <<
-				"\n* Min: " << pretty_time(min_h) <<
-				"\n* Max: " << pretty_time(max_h) <<
-				"\n* Median: " << pretty_time(median_h) << "\n\n";
-
-			std::cout << "meow_hash.hpp:\n* Total time: " << pretty_time(total_hpp) <<
-				"\n* Mean: " << pretty_time(mean_hpp) <<
-				"\n* Min: " << pretty_time(min_hpp) <<
-				"\n* Max: " << pretty_time(max_hpp) <<
-				"\n* Median: " << pretty_time(median_hpp) << "\n\n";
-
-			std::cout << "Advantage of the C version: " <<
-				"\n* Mean: " << 100 * (1 - (static_cast<double>(mean_h) / static_cast<double>(mean_hpp))) << "%"
-				"\n* Min: " << 100 * (1 - (static_cast<double>(min_h) / static_cast<double>(min_hpp))) << "%"
-				"\n* Max: " << 100 * (1 - (static_cast<double>(max_h) / static_cast<double>(max_hpp))) << "%"
-				"\n* Median: " << 100 * (1 - (static_cast<double>(median_h) / static_cast<double>(median_hpp))) << "%\n\n\n";
-				
-			test_num /= 2;
-			test_buf_size *= 2;
-		}
-	}
-
-
-	{
-		std::cout << "\n=== 32BIT: ===\n\n";;
-
-		constexpr int32_t base_num = (1 << 12);
-		constexpr int32_t base_buf_size = (1 << 16);
-		constexpr int32_t adv_steps = 8;
-
-		int32_t test_buf_size = base_buf_size;
-		int32_t test_num = base_num;
-
-		for (int adv_step = 0; adv_step < adv_steps; adv_step++)
-		{
-			std::minstd_rand rng(std::chrono::system_clock::now().time_since_epoch().count());
-			std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
-
-			std::array<uint64_t, base_num> bench_time_h, bench_time_hpp;
-
-			std::vector<uint32_t> input_buffer;
-			input_buffer.resize(test_buf_size);
-
-			for (int i = 0; i < test_num; i++)
-			{
-
-				std::generate(input_buffer.begin(), input_buffer.end(), [&rng, &dist]() {return dist(rng); });
-				uint32_t seed = dist(rng);
-
-				// Each test is ran four time, first with the C version, second with the C++ version, third again with the C version, and fourth with the C++ version. This is done to account for any possible slowdowns caused by cache misses.
-
-				// warmup
-				auto tp_h_1 = std::chrono::system_clock::now();
-				uint32_t res_h = XXH32(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed);
-				auto tp_h_2 = std::chrono::system_clock::now();
-
-				auto tp_hpp_1 = std::chrono::system_clock::now();
-				uint32_t res_hpp = xxh::xxhash<32>(input_buffer, seed);
-				auto tp_hpp_2 = std::chrono::system_clock::now();
-
-				// reality
-				tp_h_1 = std::chrono::system_clock::now();
-				res_h = XXH32(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed);
-				tp_h_2 = std::chrono::system_clock::now();
-
-				bench_time_h[i] = std::chrono::duration_cast<std::chrono::nanoseconds>(tp_h_2 - tp_h_1).count();
-
-				tp_hpp_1 = std::chrono::system_clock::now();
-				res_hpp = xxh::xxhash<32>(input_buffer, seed);
-				tp_hpp_2 = std::chrono::system_clock::now();
-
-				bench_time_hpp[i] = std::chrono::duration_cast<std::chrono::nanoseconds>(tp_hpp_2 - tp_hpp_1).count();
-
-				if (res_h != res_hpp)
-				{
-					std::cout << "ERROR: adv_step: " << adv_step << " i: " << i << " | res_h: " << res_h << " | res_hpp: " << res_hpp << "\n";
-				}
-			}
-
-			uint64_t min_h = *std::min_element(bench_time_h.begin(), bench_time_h.begin() + test_num);
-			uint64_t min_hpp = *std::min_element(bench_time_hpp.begin(), bench_time_hpp.begin() + test_num);
-
-			uint64_t max_h = *std::max_element(bench_time_h.begin(), bench_time_h.begin() + test_num);
-			uint64_t max_hpp = *std::max_element(bench_time_hpp.begin(), bench_time_hpp.begin() + test_num);
-
-			uint64_t total_h = std::accumulate(bench_time_h.begin(), bench_time_h.begin() + test_num, 0ull);
-			uint64_t total_hpp = std::accumulate(bench_time_hpp.begin(), bench_time_hpp.begin() + test_num, 0ull);
-
-			uint64_t mean_h = total_h / test_num;
-			uint64_t mean_hpp = total_hpp / test_num;
-
-			std::sort(bench_time_h.begin(), bench_time_h.begin() + test_num);
-			std::sort(bench_time_hpp.begin(), bench_time_hpp.begin() + test_num);
-
-			uint64_t median_h = bench_time_h[test_num / 2];
-			uint64_t median_hpp = bench_time_hpp[test_num / 2];
-			
-			std::cout << "Tests ran: " << test_num << "\nInput buffer size: " << test_buf_size * sizeof(uint32_t) << "\n\n";
-
-			std::cout << "C xxhash.h:\n* Total time: " << pretty_time(total_h) <<
-				"\n* Mean: " << pretty_time(mean_h) <<
-				"\n* Min: " << pretty_time(min_h) <<
-				"\n* Max: " << pretty_time(max_h) <<
-				"\n* Median: " << pretty_time(median_h) << "\n\n";
-
-			std::cout << "C++ xxhash.hpp:\n* Total time: " << pretty_time(total_hpp) <<
-				"\n* Mean: " << pretty_time(mean_hpp) <<
-				"\n* Min: " << pretty_time(min_hpp) <<
-				"\n* Max: " << pretty_time(max_hpp) <<
-				"\n* Median: " << pretty_time(median_hpp) << "\n\n";
-
-			std::cout << "Advantage of the C version: " <<
-				"\n* Mean: " << 100 * (1 - (static_cast<double>(mean_h) / static_cast<double>(mean_hpp))) << "%"
-				"\n* Min: " << 100 * (1 - (static_cast<double>(min_h) / static_cast<double>(min_hpp))) << "%"
-				"\n* Max: " << 100 * (1 - (static_cast<double>(max_h) / static_cast<double>(max_hpp))) << "%"
-				"\n* Median: " << 100 * (1 - (static_cast<double>(median_h) / static_cast<double>(median_hpp))) << "%\n\n\n";
-				
-			test_num /= 2;
-			test_buf_size *= 2;
-		}
-	}
-	
-	
-	std::cin.get();
-	return res;
+	return Catch::Session().run(argc, argv);
 }
 
 TEST_CASE("Results are the same as the original implementation for small inputs", "[compatibility]")
@@ -382,13 +147,11 @@ TEST_CASE("Results are the same as the original implementation for large, random
 	std::minstd_rand rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()));
 	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
 
-	
 
 	for (size_t i = 0; i < test_num; i++)
 	{
 		size_t test_buf_size = i + 1;
 		
-
 		std::vector<uint32_t> input_buffer;	
 
 		std::array<uint8_t, xxh::detail3::secret_size_min> secret_min_size;
@@ -534,30 +297,11 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		XXH64_canonicalFromHash(&canonical3_64_c_secmin, XXH3_64bits_withSecret(input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_min_size.data(), secret_min_size.size()));
 		XXH128_canonicalFromHash(&canonical3_128_c_secmin, XXH3_128bits_withSecret(input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_min_size.data(), secret_min_size.size()));
-
-	
-
-
 		
+
+
 		REQUIRE(XXH32(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<32>(input_buffer, seed));
 		REQUIRE(XXH64(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<64>(input_buffer, seed));
-		
-
-		XXH_ALIGN(XXH_ACC_ALIGN) std::array<xxh_u64, ACC_NB> acc_c = XXH3_INIT_ACC;
-		alignas(xxh::detail3::acc_align) std::array<uint64_t, xxh::detail3::acc_nb> acc_cpp = xxh::detail3::init_acc;
-
-		if (cool_cmp(acc_c, acc_cpp))
-		{
-			//	std::cout << "Initial accumulators identical.\n";
-		}
-
-		//xxh::detail3::accumulate_512<xxh::vec_mode::scalar>(acc_cpp.data(), input_buffer.data(), secret_cpp.data(), xxh::detail3::acc_width::acc_128bits);
-		//XXH3_accumulate_512(acc_c.data(), input_buffer.data(), secret_c.data(), XXH3_accWidth_e::XXH3_acc_128bits);
-
-		if (cool_cmp(acc_c, acc_cpp))
-		{
-			//	std::cout << "Accumulate 512 accumulators identical.\n";
-		}
 
 		REQUIRE(XXH3_64bits_withSeed(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash3<64>(input_buffer, seed));
 		REQUIRE(XXH3_128bits_withSeed(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash3<128>(input_buffer, seed));
@@ -571,8 +315,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		REQUIRE(XXH3_64bits_withSecret(input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_min_size.data(), secret_min_size.size()) == xxh::xxhash3<64>(input_buffer, 0, secret_min_size.data(), secret_min_size.size()));
 		REQUIRE(XXH3_128bits_withSecret(input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_min_size.data(), secret_min_size.size()) == xxh::xxhash3<128>(input_buffer, 0, secret_min_size.data(), secret_min_size.size()));
 
-		
-		
+
 
 		REQUIRE(XXH32_digest(hash_state_32_c) == hash_state_32_cpp.digest());
 		REQUIRE(XXH64_digest(hash_state_64_c) == hash_state_64_cpp.digest());
@@ -610,9 +353,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		REQUIRE(XXH64_hashFromCanonical(&canonical3_64_c_secmin) == canonical3_64_cpp_secmin.get_hash());
 		REQUIRE(XXH128_hashFromCanonical(&canonical3_128_c_secmin).high64 == canonical3_128_cpp_secmin.get_hash().high64);
-		REQUIRE(XXH128_hashFromCanonical(&canonical3_128_c_secmin).low64 == canonical3_128_cpp_secmin.get_hash().low64);
-
-		
+		REQUIRE(XXH128_hashFromCanonical(&canonical3_128_c_secmin).low64 == canonical3_128_cpp_secmin.get_hash().low64);	
 	}
 }
 
@@ -720,4 +461,3 @@ TEST_CASE("Printing results for inter-platform comparison", "[platform]")
 	RAW_PRINT(xxh::xxhash3<128>(alternating_data2, 32, 65536));
 }
 
-*/

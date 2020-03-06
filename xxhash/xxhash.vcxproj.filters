@@ -35,9 +35,6 @@
     <ClCompile Include="xxhash.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="test_simple.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include=".travis.yml">

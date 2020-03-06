@@ -1786,7 +1786,7 @@ namespace xxh
 	template <size_t N>
 	struct canonical_t
 	{
-		std::array<uint8_t, N / 8> digest; 
+		std::array<uint8_t, N / 8> digest {0};
 
 
 
