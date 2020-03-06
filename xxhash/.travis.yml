@@ -1,42 +1,50 @@
-language: cpp
-os: linux
+--- 
+after_failure: 
+  - "COREFILE=$(find . -maxdepth 1 -name \"core*\" | head -n 1)"
+  - "if [[ -f \"$COREFILE\" ]]; then gdb -c \"$COREFILE\" example -ex \"thread apply all bt\" -ex \"set pagination 0\" -batch; fi"
+before_script: 
+  - "ulimit -c unlimited -S"
 dist: bionic
+install: 
+  - "sudo apt-get install -y gdb"
+language: cpp
+matrix: 
+  include: 
+    - 
+      addons: 
+        apt: 
+          packages: 
+            - g++-7
+            - gdb
+          sources: 
+            - ubuntu-toolchain-r-test
+      compiler: gcc
+      env: "COMPILER=g++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -Wall -Wpedantic -Wextra \" LIBS=\"\""
+    - 
+      addons: 
+        apt: 
+          packages: 
+            - g++-8
+            - gdb
+          sources: 
+            - ubuntu-toolchain-r-test
+      compiler: gcc
+      env: "COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -Wall -Wpedantic -Wextra \" LIBS=\"\""
+    - 
+      addons: 
+        apt: 
+          packages: 
+            - clang-7
+            - g++-8
+            - gdb
+          sources: 
+            - ubuntu-toolchain-r-test
+            - llvm-toolchain-bionic-7
+      compiler: clang
+      env: "COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -Wall -Wpedantic -Wextra \" LIBS=\"\""
+os: linux
+script: 
+  - "cd ./xxhash"
+  - "make CXX=$COMPILER"
+  - ./test
 sudo: required
-
-matrix:
-  include:
-    - compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-7', 'gdb']
-      env: COMPILER=g++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=" -O0 -g -mavx2 -Wall -Wpedantic -Wextra " LIBS=""
-
-	- compiler: gcc
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-8', 'gdb']
-      env: COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=" -O0 -g -mavx2 -Wall -Wpedantic -Wextra " LIBS=""
-
-    - compiler: clang
-      addons:
-        apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-bionic-7']
-          packages: ['clang-7', 'g++-8', 'gdb']
-      env: COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=" -O0 -g -mavx2 -Wall -Wpedantic -Wextra " LIBS=""
-
-install:
-- sudo apt-get install -y gdb
-
-before_script:
-- ulimit -c unlimited -S 
-
-script:
-- cd ./xxhash
-- make CXX=$COMPILER 
-- ./test
-
-after_failure:
-- COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
-- if [[ -f "$COREFILE" ]]; then gdb -c "$COREFILE" example -ex "thread apply all bt" -ex "set pagination 0" -batch; fi
