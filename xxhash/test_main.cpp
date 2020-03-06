@@ -26,7 +26,7 @@ std::string byte_print(T val)
 	constexpr std::array<char, 16> hex_digits = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
 	const uint8_t* inspect_ptr = reinterpret_cast<const uint8_t*>(&val);
 	std::string output = "";
-	for (int i = 0; i < sizeof(T); i++)
+	for (size_t i = 0; i < sizeof(T); i++)
 	{
 		output += std::string("0x") + hex_digits[(*inspect_ptr) >> 4] + hex_digits[((*inspect_ptr) & 0x0F)] + ' ';
 		inspect_ptr++;
@@ -56,7 +56,7 @@ template <typename T1, typename T2, typename = std::enable_if_t<sizeof(T1) == si
 bool cool_cmp(T1 a, T2 b)
 {
 	bool good = true;
-	for (int i = 0; i < sizeof(T1); i++)
+	for (size_t i = 0; i < sizeof(T1); i++)
 	{
 		uint8_t v1 = *(static_cast<uint8_t*>(static_cast<void*>(&a)) + i);
 		uint8_t v2 = *(static_cast<uint8_t*>(static_cast<void*>(&b)) + i);

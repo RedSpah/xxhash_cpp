@@ -691,7 +691,7 @@ namespace xxh
 		constexpr static std::array<hash64_t, 5> primes64 = { 11400714785074694791ULL, 14029467366897019727ULL, 1609587929392839161ULL, 9650029242287828579ULL, 2870177450012600261ULL };
 
 		template <size_t N>
-		constexpr hash_t<N> PRIME(int64_t n) {}
+		constexpr hash_t<N> PRIME([[maybe_unused]] int64_t n) {}
 
 		template <>
 		constexpr hash32_t PRIME<32>(int64_t n)
@@ -735,7 +735,7 @@ namespace xxh
 		}
 
 		template <size_t N>
-		inline hash_t<N> endian_align_sub_ending(hash_t<N> hash_ret, const uint8_t* p, const uint8_t* bEnd, xxh::endianness endian, xxh::alignment align) {}
+		inline hash_t<N> endian_align_sub_ending([[maybe_unused]] hash_t<N> hash_ret, [[maybe_unused]] const uint8_t* p, [[maybe_unused]] const uint8_t* bEnd, [[maybe_unused]] xxh::endianness endian, [[maybe_unused]] xxh::alignment align) {}
 
 		template <>
 		inline hash_t<32> endian_align_sub_ending<32>(hash_t<32> hash_ret, const uint8_t* p, const uint8_t* bEnd, xxh::endianness endian, xxh::alignment align)
@@ -1102,9 +1102,6 @@ namespace xxh
 				x *= mix_constant;
 				return (x ^ (x >> 28));
 
-				//uint64_t const keyed = input64 ^ (readLE<64>(secret) + seed);
-				//uint64_t const mix64 = len + ((keyed ^ (keyed >> 51))* PRIME<32>(1));
-				//return avalanche((mix64 ^ (mix64 >> 47))* PRIME<64>(2));
 			}
 			else
 			{
@@ -1125,17 +1122,7 @@ namespace xxh
 				m128.high64 = avalanche(m128.high64);
 
 				return m128;
-
-				/*
-				uint64_t const input_64_hi = swap<64>(input_64_lo);
-				uint64_t const keyed_lo = input_64_lo ^ (readLE<64>(secret) + seed);
-				uint64_t const keyed_hi = input_64_hi ^ (readLE<64>(secret + 8) - seed);
-				uint64_t const mix64l1 = len + ((keyed_lo ^ (keyed_lo >> 51))* PRIME<32>(1));
-				uint64_t const mix64l2 = (mix64l1 ^ (mix64l1 >> 47))* PRIME<64>(2);
-				uint64_t const mix64h1 = ((keyed_hi ^ (keyed_hi >> 47))* PRIME<64>(1)) - len;
-				uint64_t const mix64h2 = (mix64h1 ^ (mix64h1 >> 43))* PRIME<64>(4);
-				hash128_t const h128 = { avalanche(mix64l2) /*low64, avalanche(mix64h2) /*high64 };
-				return h128; */
+			
 			}
 		}
 
