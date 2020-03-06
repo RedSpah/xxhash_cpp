@@ -52,14 +52,14 @@ matrix:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-bionic-7
       compiler: clang
-      env: "COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -march=native -Wall -Wpedantic -Wextra \" LIBS=\"\""
+      env: "COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O2 -g -mavx2 -march=native -Wall -Wpedantic -Wextra \" LIBS=\"\""
 os: linux
 script: 
   - "cd ./xxhash"
-  - "make CXX=$COMPILER OUTNAME=test0 CMDARGS=\"-DXXH_VECTOR=0\""
-  - "make CXX=$COMPILER OUTNAME=test1 CMDARGS=\"-DXXH_VECTOR=1\""
-  - "make CXX=$COMPILER OUTNAME=test2 CMDARGS=\"-DXXH_VECTOR=2\""
-  - ./test0
-  - ./test1
-  - ./test2
+#  - "make CXX=$COMPILER OUTNAME=test0 CMDARGS=\"-DXXH_VECTOR=0\""
+#  - "make CXX=$COMPILER OUTNAME=test1 CMDARGS=\"-DXXH_VECTOR=1\""
+  - "make CXX=$COMPILER OUTNAME=test CMDARGS=\"-DXXH_VECTOR=2\""
+#  - ./test0
+#  - ./test1
+  - ./test
 sudo: required
