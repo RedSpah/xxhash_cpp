@@ -342,7 +342,7 @@ namespace xxh
 			{
 				return intrin::bit_ops::rotl64(n, r);
 			}
-		};
+		}
 
 		template <size_t N>
 		inline uint_t<N> rotr(uint_t<N> n, int32_t r)
@@ -356,7 +356,7 @@ namespace xxh
 			{
 				return intrin::bit_ops::rotr64(n, r);
 			}
-		};
+		}
 
 		template <size_t N>
 		inline uint_t<N> swap(uint_t<N> n)
@@ -370,7 +370,7 @@ namespace xxh
 			{
 				return intrin::bit_ops::swap64(n);
 			}
-		};
+		}
 
 		inline uint64_t mul32to64(uint32_t x, uint32_t y) 
 		{ 
@@ -527,7 +527,7 @@ namespace xxh
 			{
 				return a ^ b;
 			}
-		};
+		}
 		
 
 		template <size_t N>
@@ -549,7 +549,7 @@ namespace xxh
 			{
 				return a * b;
 			}
-		};
+		}
 
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> add(vec_t<N> a, vec_t<N> b)
@@ -570,7 +570,7 @@ namespace xxh
 			{
 				return a + b;
 			}
-		};
+		}
 
 
 		template <size_t N, uint8_t S1, uint8_t S2, uint8_t S3, uint8_t S4>
@@ -592,7 +592,7 @@ namespace xxh
 			{
 				return a;
 			}
-		};
+		}
 
 
 		template <size_t N>
@@ -614,7 +614,7 @@ namespace xxh
 			{
 				return a;
 			}
-		};
+		}
 
 
 		template <size_t N>
@@ -636,7 +636,7 @@ namespace xxh
 			{
 				return n >> a;
 			}
-		};
+		}
 
 
 		template <size_t N>
@@ -658,7 +658,7 @@ namespace xxh
 			{
 				return n << a;
 			}
-		};
+		}
 	}
 
 	/* *******************************************************************
@@ -675,7 +675,7 @@ namespace xxh
 		constexpr static std::array<hash64_t, 5> primes64 = { 11400714785074694791ULL, 14029467366897019727ULL, 1609587929392839161ULL, 9650029242287828579ULL, 2870177450012600261ULL };
 
 		template <size_t N>
-		constexpr hash_t<N> PRIME(int64_t n) {};
+		constexpr hash_t<N> PRIME(int64_t n) {}
 
 		template <>
 		constexpr hash32_t PRIME<32>(int64_t n)
@@ -707,7 +707,7 @@ namespace xxh
 		}
 
 		template <size_t N>
-		inline void endian_align_sub_mergeround([[maybe_unused]] hash_t<N>& hash_ret, hash_t<N> v1, hash_t<N> v2, hash_t<N> v3, hash_t<N> v4) {}
+		inline void endian_align_sub_mergeround([[maybe_unused]] hash_t<N>& hash_ret, [[maybe_unused]] hash_t<N> v1, [[maybe_unused]] hash_t<N> v2, [[maybe_unused]] hash_t<N> v3, [[maybe_unused]] hash_t<N> v4) {}
 
 		template <>
 		inline void endian_align_sub_mergeround<64>(hash_t<64>& hash_ret, hash_t<64> v1, hash_t<64> v2, hash_t<64> v3, hash_t<64> v4)
@@ -833,7 +833,9 @@ namespace xxh
 
 		/* Constants */
 		constexpr int secret_default_size = 192;
-		constexpr int secret_size_min = 136;
+		constexpr int secret_size_min = 136; 
+
+
 		constexpr int secret_consume_rate = 8;
 		constexpr int stripe_len = 64;
 		constexpr int acc_nb = 8;
@@ -1053,7 +1055,7 @@ namespace xxh
 				uint64_t  const keyed_hi = (uint64_t)combinedh ^ (readLE<32>(secret + 4) - seed);
 				uint64_t  const mixedl = keyed_lo * PRIME<64>(1);
 				uint64_t  const mixedh = keyed_hi * PRIME<64>(5);
-				hash128_t const h128 = { avalanche(mixedl) /*low64*/, avalanche(mixedh) /*high64*/ };
+				hash128_t const h128 = {avalanche(mixedl), avalanche(mixedh)};
 				return h128;
 			}
 		}
@@ -1172,11 +1174,11 @@ namespace xxh
 			acc.low64 ^= readLE<64>(input_2) + readLE<64>(input_2 + 8);
 			acc.high64 += mix_16b(input_2, secret + 16, seed);
 			acc.high64 ^= readLE<64>(input_1) + readLE<64>(input_1 + 8);
-			return acc;
+			return acc;	
 		}
 
 		template <size_t N>
-		hash_t<N> len_17to128(const uint8_t* XXH_RESTRICT input, size_t len, const uint8_t* XXH_RESTRICT secret, size_t secretSize, hash64_t seed)
+		hash_t<N> len_17to128(const uint8_t* XXH_RESTRICT input, size_t len, const uint8_t* XXH_RESTRICT secret, [[maybe_unused]] size_t secretSize, hash64_t seed)
 		{
 			if constexpr (N == 64)
 			{
@@ -1222,20 +1224,20 @@ namespace xxh
 		}
 
 		template <size_t N>
-		hash_t<N> len_129to240(const uint8_t* XXH_RESTRICT input, size_t len, const uint8_t* XXH_RESTRICT secret, size_t secretSize, hash64_t seed)
+		hash_t<N> len_129to240(const uint8_t* XXH_RESTRICT input, size_t len, const uint8_t* XXH_RESTRICT secret, [[maybe_unused]] size_t secretSize, hash64_t seed)
 		{
 			if constexpr (N == 64)
 			{
 				uint64_t acc = len * PRIME<64>(1);
-				int const nbRounds = (int)len / 16;
+				size_t const nbRounds = len / 16;
 
-				for (uint64_t i = 0; i < 8; i++) {
+				for (size_t i = 0; i < 8; i++) {
 					acc += mix_16b(input + (i * 16), secret + (i * 16), seed);
 				}
 
 				acc = avalanche(acc);
 
-				for (uint64_t i = 8; i < nbRounds; i++) {
+				for (size_t i = 8; i < nbRounds; i++) {
 					acc += mix_16b(input + (i * 16), secret + ((i - 8) * 16) + midsize_startoffset, seed);
 				}
 
@@ -1246,7 +1248,7 @@ namespace xxh
 			else
 			{
 				hash128_t acc;
-				int const nbRounds = (int)len / 32;
+				size_t const nbRounds = len / 32;
 				acc.low64 = len * PRIME<64>(1);
 				acc.high64 = 0;
 

@@ -31,7 +31,7 @@ void handler(int sig) {
 
 
 #endif
-*/
+
 
 #define XXH_STATIC_LINKING_ONLY
 
@@ -132,7 +132,7 @@ bool operator == (XXH128_hash_t h1, xxh::hash128_t h2)
 	return h1.high64 == h2.high64 && h1.low64 == h2.low64;
 }
 
-int main(int argc, char** argv)
+int main_(int argc, char** argv)
 {
 
 	int res = Catch::Session().run(argc, argv);
@@ -338,7 +338,7 @@ int main(int argc, char** argv)
 		}
 	}
 	
-	*/
+	
 	std::cin.get();
 	return res;
 }
@@ -378,7 +378,6 @@ TEST_CASE("Results are the same as the original implementation for small inputs"
 TEST_CASE("Results are the same as the original implementation for large, randomly generated inputs", "[compatibility]")
 {
 	constexpr int32_t test_num = 1024;
-	//constexpr size_t test_buf_size = (1 << 16);
 
 	std::minstd_rand rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()));
 	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
@@ -542,81 +541,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		
 		REQUIRE(XXH32(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<32>(input_buffer, seed));
 		REQUIRE(XXH64(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<64>(input_buffer, seed));
-		/*
-		std::array<uint8_t, xxh::detail3::secret_default_size> secret_c, secret_cpp;
-		XXH3_initCustomSecret(secret_c.data(), seed);
-		xxh::detail3::init_custom_secret(secret_cpp.data(), seed);
-
-		//std::cout << "Comparing secrets | test_num = " << i << "\n";
-		if (cool_cmp(secret_c, secret_cpp))
-		{
-		//	std::cout << "Secrets Identical.\n";
-		}
-		//uint64_t c = 
-
-		XXH_ALIGN(XXH_ACC_ALIGN) std::array<xxh_u64, ACC_NB> acc_c = XXH3_INIT_ACC;
-		alignas(xxh::detail3::acc_align) std::array<uint64_t, xxh::detail3::acc_nb> acc_cpp = xxh::detail3::init_acc;
-
-		if (cool_cmp(acc_c, acc_cpp))
-		{
-		//	std::cout << "Initial accumulators identical.\n";
-		}
-
-		xxh::detail3::accumulate_512<xxh::vec_mode::scalar>(acc_cpp.data(), input_buffer.data(), secret_cpp.data(), xxh::detail3::acc_width::acc_128bits);
-		XXH3_accumulate_512(acc_c.data(), input_buffer.data(), secret_c.data(), XXH3_accWidth_e::XXH3_acc_128bits);
-
-		if (cool_cmp(acc_c, acc_cpp))
-		{
-		//	std::cout << "Accumulate 512 accumulators identical.\n";
-		}
-
-		acc_c = XXH3_INIT_ACC;
-		acc_cpp = xxh::detail3::init_acc;
-
-		size_t const nb_rounds = (xxh::detail3::secret_default_size - xxh::detail3::stripe_len) / xxh::detail3::secret_consume_rate;
-
-		xxh::detail3::accumulate(acc_cpp.data(), (uint8_t*)(void*)input_buffer.data(), secret_cpp.data(), nb_rounds, xxh::detail3::acc_width::acc_128bits);
-		XXH3_accumulate(acc_c.data(), (uint8_t*)(void*)input_buffer.data(), secret_c.data(), nb_rounds, XXH3_accWidth_e::XXH3_acc_128bits);
-
-		if (cool_cmp(acc_c, acc_cpp))
-		{
-		//	std::cout << "Accumulate accumulators identical.\n";
-		}
-
-
-		acc_c = XXH3_INIT_ACC;
-		acc_cpp = xxh::detail3::init_acc;
-
-		xxh::detail3::scramble_acc<xxh::vec_mode::scalar>(acc_cpp.data(), secret_cpp.data());
-		XXH3_scrambleAcc(acc_c.data(), secret_c.data());
-
-		if (cool_cmp(acc_c, acc_cpp))
-		{
-		//	std::cout << "Scramble acc accumulators identical.\n";
-		}
-
-		//std::cin.get();
-
-
-		acc_c = XXH3_INIT_ACC;
-		acc_cpp = xxh::detail3::init_acc;
-
-		xxh::detail3::hash_long_internal_loop(acc_cpp.data(), (uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), (uint8_t*)(void*)secret_cpp.data(), xxh::detail3::secret_default_size, xxh::detail3::acc_width::acc_128bits);
-		XXH3_hashLong_internal_loop(acc_c.data(), (uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), (uint8_t*)(void*)secret_cpp.data(), xxh::detail3::secret_default_size, XXH3_accWidth_e::XXH3_acc_128bits);
-
-		if (cool_cmp(acc_c, acc_cpp))
-		{
-		//	std::cout << "Hash long internal loop accumulators identical.\n";
-		}
-
-		XXH128_hash_t c_res = XXH3_hashLong_128b_internal((uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_c.data(), xxh::detail3::secret_default_size);
-		xxh::uint128_t cpp_res = xxh::detail3::hash_long_internal<128>((uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_cpp.data());
-
-		REQUIRE(c_res.high64 == cpp_res.high64 );
-		REQUIRE(c_res.low64 == cpp_res.low64);
-
-		REQUIRE(XXH3_hashLong_internal((uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_c.data(), xxh::detail3::secret_default_size) == xxh::detail3::hash_long_internal<64>((uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_cpp.data()));
-		*/
+		
 
 		XXH_ALIGN(XXH_ACC_ALIGN) std::array<xxh_u64, ACC_NB> acc_c = XXH3_INIT_ACC;
 		alignas(xxh::detail3::acc_align) std::array<uint64_t, xxh::detail3::acc_nb> acc_cpp = xxh::detail3::init_acc;
@@ -794,3 +719,5 @@ TEST_CASE("Printing results for inter-platform comparison", "[platform]")
 	RAW_PRINT(xxh::xxhash3<128>(alternating_data2, 32, 0));
 	RAW_PRINT(xxh::xxhash3<128>(alternating_data2, 32, 65536));
 }
+
+*/

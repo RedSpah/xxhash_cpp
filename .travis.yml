@@ -9,24 +9,34 @@ matrix:
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-7']
-      env: COMPILER=g++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=" -O3 -mavx2 -Wall -Wpedantic -Wextra " LIBS=""
+          packages: ['g++-7', 'gdb']
+      env: COMPILER=g++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=" -O0 -g -mavx2 -Wall -Wpedantic -Wextra " LIBS=""
 
-    - compiler: gcc
+	- compiler: gcc
       addons:
         apt:
           sources: ['ubuntu-toolchain-r-test']
-          packages: ['g++-8']
-      env: COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=" -O3 -mavx2 -Wall -Wpedantic -Wextra " LIBS=""
+          packages: ['g++-8', 'gdb']
+      env: COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=" -O0 -g -mavx2 -Wall -Wpedantic -Wextra " LIBS=""
 
     - compiler: clang
       addons:
         apt:
-          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-trusty-7']
-          packages: ['clang-7', 'g++-8']
-      env: COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=" -O3 -mavx2 -Wall -Wpedantic -Wextra " LIBS=""
+          sources: ['ubuntu-toolchain-r-test', 'llvm-toolchain-bionic-7']
+          packages: ['clang-7', 'g++-8', 'gdb']
+      env: COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=" -O0 -g -mavx2 -Wall -Wpedantic -Wextra " LIBS=""
+
+install:
+- sudo apt-get install -y gdb
+
+before_script:
+- ulimit -c unlimited -S 
 
 script:
 - cd ./xxhash
 - make CXX=$COMPILER 
 - ./test
+
+after_failure:
+- COREFILE=$(find . -maxdepth 1 -name "core*" | head -n 1) # find core file
+- if [[ -f "$COREFILE" ]]; then gdb -c "$COREFILE" example -ex "thread apply all bt" -ex "set pagination 0" -batch; fi
