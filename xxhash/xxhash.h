@@ -535,7 +535,7 @@ typedef struct XXH3_state_s XXH3_state_t;
 
 #define XXH3_SECRET_DEFAULT_SIZE 192   /* minimum XXH3_SECRET_SIZE_MIN */
 #define XXH3_INTERNALBUFFER_SIZE 256
-struct XXH3_state_s {
+struct alignas(64) XXH3_state_s {
    XXH_ALIGN_MEMBER(64, XXH64_hash_t acc[8]);
   /* used to store a custom secret generated from the seed. Makes state larger.
    * Design might change */

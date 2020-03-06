@@ -438,7 +438,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 
 		hash_state_32_cpp.update(input_buffer);
-		hash_state_64_cpp.update(input_buffer);
+		hash_state_64_cpp.update(input_buffer); 
 
 		XXH32_update(hash_state_32_c, input_buffer.data(), test_buf_size);
 		XXH64_update(hash_state_64_c, input_buffer.data(), test_buf_size);

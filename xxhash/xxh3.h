@@ -1462,9 +1462,12 @@ XXH3_64bits_withSeed(const void* input, size_t len, XXH64_hash_t seed)
 
 /* ===   XXH3 streaming   === */
 
+#include <cstdlib>
+
 XXH_PUBLIC_API XXH3_state_t* XXH3_createState(void)
 {
     return (XXH3_state_t*)XXH_malloc(sizeof(XXH3_state_t));
+	//return (XXH3_state_t*)std::aligned_alloc();
 }
 
 XXH_PUBLIC_API XXH_errorcode XXH3_freeState(XXH3_state_t* statePtr)

@@ -274,8 +274,6 @@ namespace xxh
 	}
 
 
-
-
 	namespace hash_t_impl
 	{
 		/* *************************************
@@ -721,7 +719,7 @@ namespace xxh
 		}
 
 		template <size_t N>
-		inline void endian_align_sub_mergeround(hash_t<N>& hash_ret, hash_t<N> v1, hash_t<N> v2, hash_t<N> v3, hash_t<N> v4)
+		inline void endian_align_sub_mergeround([[maybe_unused]] hash_t<N>& hash_ret, [[maybe_unused]] hash_t<N> v1, [[maybe_unused]] hash_t<N> v2, [[maybe_unused]] hash_t<N> v3, [[maybe_unused]] hash_t<N> v4)
 		{
 			if constexpr (N == 64)
 			{
@@ -881,7 +879,6 @@ namespace xxh
 		constexpr std::array<uint64_t, 8> init_acc = { PRIME<32>(3), PRIME<64>(1), PRIME<64>(2), PRIME<64>(3), PRIME<64>(4), PRIME<32>(2), PRIME<64>(5), PRIME<32>(1) };
 
 		constexpr std::array<uint64_t, 3> vec_bit_width = { 64, 128, 256 };
-		//constexpr std::array<int, 3> a512_i_xor = { 1, 0, 0 };
 
 		enum class acc_width : uint8_t { acc_64bits, acc_128bits };
 		
@@ -947,10 +944,7 @@ namespace xxh
 					}
 
 					xacc[i] = add<bits>(xacc[i], product);
-				}
-					
-				
-				
+				}				
 			}
 		}
 
@@ -972,7 +966,6 @@ namespace xxh
 				vec_t const key_vec = loadu<bits>(xsecret + i);
 				vec_t const data_key = xorv<bits>(data_vec, key_vec);
 				
-
 				if constexpr (bits > 64)	
 				{
 					vec_t const prime32 = set1<bits>(PRIME<32>(1));
@@ -1084,8 +1077,7 @@ namespace xxh
 			seed ^= (uint64_t)swap<32>((uint32_t)seed) << 32;
 
 			if constexpr (N == 64)
-			{
-				
+			{		
 				uint32_t const input1 = readLE<32>(input);
 				uint32_t const input2 = readLE<32>(input + len - 4);
 				uint64_t const bitflip = (readLE<64>(secret + 8) ^ readLE<64>(secret + 16)) - seed;
@@ -1097,7 +1089,6 @@ namespace xxh
 				x ^= (x >> 35) + len;
 				x *= mix_constant;
 				return (x ^ (x >> 28));
-
 			}
 			else
 			{
@@ -1117,8 +1108,7 @@ namespace xxh
 				m128.low64 ^= (m128.low64 >> 28);
 				m128.high64 = avalanche(m128.high64);
 
-				return m128;
-			
+				return m128;		
 			}
 		}
 
@@ -1347,24 +1337,6 @@ namespace xxh
 
 		}
 
-		/*
-		template <size_t N>
-		hash_t<N> hash_long(const uint8_t* input, size_t len, hash64_t seed, const uint8_t* XXH_RESTRICT secret, size_t secretSize)
-		{
-			
-			//alignas(8) uint8_t custom_secret[secret_default_size];
-
-			if (seed == 0)
-			{
-				return hash_long_internal<N>(input, len, secret, secretSize);
-			}
-			else
-			{
-				init_custom_secret(custom_secret, seed);
-				return hash_long_internal<N>(input, len, custom_secret, secret_default_size);
-			}
-		}*/
-
 		template <size_t N, secret_source source>
 		hash_t<N> xxhash3(const void* input, size_t len, hash64_t seed, const void* secret = default_secret, size_t secretSize = secret_default_size)
 		{
@@ -1409,7 +1381,6 @@ namespace xxh
 				return hash_long_internal<N>(static_cast<const uint8_t*>(input), len, static_cast<const uint8_t*>(secret), secretSize);
 			}
 		}
-
 	}
 
 	template <size_t N>
@@ -1470,8 +1441,6 @@ namespace xxh
 		return detail3::xxhash3<N, detail3::secret_source::custom_secret>(input, len, 0, secret, secretSize);
 	}
 
-
-
 	template <size_t N, typename T>
 	hash_t<N> xxhash3(const std::basic_string<T>& input, hash64_t seed = 0)
 	{
@@ -1485,8 +1454,6 @@ namespace xxh
 		static_assert(!(N != 128 && N != 64), "You can only call xxhash3 in 64 or 128 bit mode.");
 		return detail3::xxhash3<N, detail3::secret_source::custom_secret>(static_cast<const void*>(input.data()), input.length() * sizeof(T), 0, secret, secretSize);
 	}
-
-
 
 	template <size_t N, typename ContiguousIterator>
 	hash_t<N> xxhash3(ContiguousIterator begin, ContiguousIterator end, hash64_t seed = 0)
@@ -1504,8 +1471,6 @@ namespace xxh
 		return detail3::xxhash3<N, detail3::secret_source::custom_secret>(static_cast<const void*>(&*begin), (end - begin) * sizeof(T), 0, secret, secretSize);
 	}
 
-
-
 	template <size_t N, typename T>
 	hash_t<N> xxhash3(const std::vector<T>& input, hash64_t seed = 0)
 	{
@@ -1520,8 +1485,6 @@ namespace xxh
 		return detail3::xxhash3<N, detail3::secret_source::custom_secret>(static_cast<const void*>(input.data()), input.size() * sizeof(T), 0, secret, secretSize);
 	}
 
-
-
 	template <size_t N, typename T, size_t AN>
 	hash_t<N> xxhash3(const std::array<T, AN>& input, hash64_t seed = 0)
 	{
@@ -1535,8 +1498,6 @@ namespace xxh
 		static_assert(!(N != 128 && N != 64), "You can only call xxhash3 in 64 or 128 bit mode.");
 		return detail3::xxhash3<N, detail3::secret_source::custom_secret>(static_cast<const void*>(input.data()), AN * sizeof(T), 0, secret, secretSize);
 	}
-
-
 
 	template <size_t N, typename T>
 	hash_t<N> xxhash3(const std::initializer_list<T>& input, hash64_t seed = 0)
@@ -1712,7 +1673,7 @@ namespace xxh
 	using hash_state64_t = hash_state_t<64>;
 
 	template <size_t N>
-	struct hash3_state_t 
+	struct alignas(64) hash3_state_t 
 	{   
 		constexpr static int internal_buffer_size = 256;
 		constexpr static int internal_buffer_stripes = (internal_buffer_size / detail3::stripe_len);
@@ -1960,8 +1921,6 @@ namespace xxh
 	struct canonical_t
 	{
 		std::array<uint8_t, N / 8> digest {0};
-
-
 
 		canonical_t(hash_t<N> hash)
 		{
