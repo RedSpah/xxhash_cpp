@@ -848,23 +848,23 @@ namespace xxh
 		using namespace bit_ops;
 
 		/* Constants */
-		constexpr int secret_default_size = 192;
-		constexpr int secret_size_min = 136; 
+		constexpr uint64_t secret_default_size = 192;
+		constexpr uint64_t secret_size_min = 136;
 
 
-		constexpr int secret_consume_rate = 8;
-		constexpr int stripe_len = 64;
-		constexpr int acc_nb = 8;
-		constexpr int prefetch_distance = 384;
-		constexpr int secret_lastacc_start = 7;
-		constexpr int secret_mergeaccs_start = 11;
-		constexpr int midsize_max = 240;
-		constexpr int midsize_startoffset = 3;
-		constexpr int midsize_lastoffset = 17;
+		constexpr uint64_t secret_consume_rate = 8;
+		constexpr uint64_t stripe_len = 64;
+		constexpr uint64_t acc_nb = 8;
+		constexpr uint64_t prefetch_distance = 384;
+		constexpr uint64_t secret_lastacc_start = 7;
+		constexpr uint64_t secret_mergeaccs_start = 11;
+		constexpr uint64_t midsize_max = 240;
+		constexpr uint64_t midsize_startoffset = 3;
+		constexpr uint64_t midsize_lastoffset = 17;
 
 		/* Compiler Constants */
 		constexpr vec_mode vector_mode = static_cast<vec_mode>(intrin::vector_mode);
-		constexpr int acc_align = intrin::acc_align;
+		constexpr uint64_t acc_align = intrin::acc_align;
 		
 		/* Defaults */
 		alignas(64) constexpr uint8_t default_secret[secret_default_size] = {
@@ -884,8 +884,8 @@ namespace xxh
 
 		constexpr std::array<uint64_t, 8> init_acc = { PRIME<32>(3), PRIME<64>(1), PRIME<64>(2), PRIME<64>(3), PRIME<64>(4), PRIME<32>(2), PRIME<64>(5), PRIME<32>(1) };
 
-		constexpr std::array<int, 3> vec_bit_width = { 64, 128, 256 };
-		constexpr std::array<int, 3> a512_i_xor = { 1, 0, 0 };
+		constexpr std::array<uint64_t, 3> vec_bit_width = { 64, 128, 256 };
+		//constexpr std::array<int, 3> a512_i_xor = { 1, 0, 0 };
 
 		enum class acc_width : uint8_t { acc_64bits, acc_128bits };
 		
@@ -904,7 +904,7 @@ namespace xxh
 		template <vec_mode V>
 		void accumulate_512(void* XXH_RESTRICT acc, const void* XXH_RESTRICT input, const void* XXH_RESTRICT secret, acc_width width)
 		{
-			constexpr int bits = vec_bit_width[static_cast<uint8_t>(V)];
+			constexpr uint64_t bits = vec_bit_width[static_cast<uint8_t>(V)];
 
 			using vec_t = vec_t<bits>;
 			
@@ -961,7 +961,7 @@ namespace xxh
 		template <vec_mode V>
 		void scramble_acc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
 		{
-			constexpr int bits = vec_bit_width[static_cast<uint8_t>(V)];
+			constexpr uint64_t bits = vec_bit_width[static_cast<uint8_t>(V)];
 			using vec_t = vec_t<bits>;
 
 			alignas(sizeof(vec_t)) vec_t* const xacc = (vec_t*)acc;
@@ -1385,7 +1385,7 @@ namespace xxh
 		template <size_t N, secret_source source>
 		hash_t<N> xxhash3(const void* input, size_t len, hash64_t seed, const void* secret = default_secret, size_t secretSize = secret_default_size)
 		{
-			alignas(8) uint8_t custom_secret[secret_default_size];
+			[[maybe_unused]] alignas(8) uint8_t custom_secret[secret_default_size];
 			const void* short_secret = default_secret;
 			size_t short_secret_size = secret_default_size;
 
@@ -1753,13 +1753,13 @@ namespace xxh
 			if (nbStripesPerBlock - nbStripesSoFar <= totalStripes) {
 				/* need a scrambling operation */
 				size_t const nbStripes = nbStripesPerBlock - nbStripesSoFar;
-				detail3::accumulate(acc, input, secret + nbStripesSoFar * detail3::secret_consume_rate, nbStripes, accWidth);
+				detail3::accumulate(acc, input, secret + (nbStripesSoFar * detail3::secret_consume_rate), nbStripes, accWidth);
 				detail3::scramble_acc<detail3::vector_mode>(acc, secret + secretLimit);
 				detail3::accumulate(acc, input + nbStripes * detail3::stripe_len, secret, totalStripes - nbStripes, accWidth);
 				nbStripesSoFar = (uint32_t)(totalStripes - nbStripes);
 			}
 			else {
-				detail3::accumulate(acc, input, secret + nbStripesSoFar * detail3::secret_consume_rate, totalStripes, accWidth);
+				detail3::accumulate(acc, input, secret + (nbStripesSoFar * detail3::secret_consume_rate), totalStripes, accWidth);
 				nbStripesSoFar += (uint32_t)totalStripes;
 			}
 		}
@@ -1955,12 +1955,12 @@ namespace xxh
 			{
 				if (seed == 0)
 				{
-					return detail3::xxhash3<N, detail3::secret_source::custom_secret>(buffer, (size_t)totalLen, seed, secret, secretLimit + detail3::stripe_len);
+					return detail3::xxhash3<N, detail3::secret_source::custom_secret>(buffer, totalLen, seed, secret, secretLimit + detail3::stripe_len);
 
 				}
 				else
 				{
-					return detail3::xxhash3<N, detail3::secret_source::seed>(buffer, (size_t)totalLen, seed, secret, secretLimit + detail3::stripe_len);
+					return detail3::xxhash3<N, detail3::secret_source::seed>(buffer, totalLen, seed, secret, secretLimit + detail3::stripe_len);
 				}
 			}
 		}
