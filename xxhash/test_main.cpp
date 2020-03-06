@@ -30,7 +30,7 @@ std::string byte_print(T val)
 	{
 		output += std::string("0x") + hex_digits[(*inspect_ptr) >> 4] + hex_digits[((*inspect_ptr) & 0x0F)] + ' ';
 		inspect_ptr++;
-	}
+	} 
 	return output;
 }
 
