@@ -243,7 +243,6 @@ copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="test_main.cpp" />
-    <ClCompile Include="xxhash.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".travis.yml" />
