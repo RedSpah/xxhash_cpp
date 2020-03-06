@@ -707,7 +707,7 @@ namespace xxh
 		}
 
 		template <size_t N>
-		inline void endian_align_sub_mergeround([[maybe_unused]] hash_t<N>& hash_ret, hash_t<N> v1, hash_t<N> v2, hash_t<N> v3, hash_t<N> v4) {};
+		inline void endian_align_sub_mergeround([[maybe_unused]] hash_t<N>& hash_ret, hash_t<N> v1, hash_t<N> v2, hash_t<N> v3, hash_t<N> v4) {}
 
 		template <>
 		inline void endian_align_sub_mergeround<64>(hash_t<64>& hash_ret, hash_t<64> v1, hash_t<64> v2, hash_t<64> v3, hash_t<64> v4)
@@ -719,7 +719,7 @@ namespace xxh
 		}
 
 		template <size_t N>
-		inline hash_t<N> endian_align_sub_ending(hash_t<N> hash_ret, const uint8_t* p, const uint8_t* bEnd, xxh::endianness endian, xxh::alignment align) {};
+		inline hash_t<N> endian_align_sub_ending(hash_t<N> hash_ret, const uint8_t* p, const uint8_t* bEnd, xxh::endianness endian, xxh::alignment align) {}
 
 		template <>
 		inline hash_t<32> endian_align_sub_ending<32>(hash_t<32> hash_ret, const uint8_t* p, const uint8_t* bEnd, xxh::endianness endian, xxh::alignment align)

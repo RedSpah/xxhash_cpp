@@ -33,10 +33,12 @@ void handler(int sig) {
 #endif
 */
 
-//#define XXH_VECTOR 0
+define XXH_STATIC_LINKING_ONLY
+
+#define XXH_VECTOR 1
 #include "xxhash.hpp"
 
-#define XXH_STATIC_LINKING_ONLY
+#
 
 //#include "xxhash.h"
 //#undef XXH_VECTOR
