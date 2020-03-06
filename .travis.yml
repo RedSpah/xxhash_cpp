@@ -18,7 +18,7 @@ matrix:
           sources: 
             - ubuntu-toolchain-r-test
       compiler: gcc
-      env: "COMPILER=g++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -Wall -Wpedantic -Wextra \" LIBS=\"\""
+      env: "COMPILER=g++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -march=native -Wall -Wpedantic -Wextra \" LIBS=\"\""
     - 
       addons: 
         apt: 
@@ -28,7 +28,7 @@ matrix:
           sources: 
             - ubuntu-toolchain-r-test
       compiler: gcc
-      env: "COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -Wall -Wpedantic -Wextra \" LIBS=\"\""
+      env: "COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -march=native -Wall -Wpedantic -Wextra \" LIBS=\"\""
     - 
       addons: 
         apt: 
@@ -40,7 +40,7 @@ matrix:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-bionic-7
       compiler: clang
-      env: "COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -Wall -Wpedantic -Wextra \" LIBS=\"\""
+      env: "COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -march=native -Wall -Wpedantic -Wextra \" LIBS=\"\""
 os: linux
 script: 
   - "cd ./xxhash"

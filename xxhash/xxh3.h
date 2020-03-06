@@ -46,7 +46,6 @@
 #undef XXH_INLINE_ALL   /* in case it's already defined */
 #define XXH_INLINE_ALL
 #include "xxhash.h"
-#include "xxhash.cpp"
 
 
 /* ===   Compiler specifics   === */
@@ -149,7 +148,7 @@
 #  endif
 #endif
 
-/*  */
+/* xxh_u64 XXH_mult32to64(xxh_u32 a, xxh_u64 b) { return (xxh_u64)a * (xxh_u64)b; } */
 #if defined(_MSC_VER) && defined(_M_IX86)
 #    include <intrin.h>
 #    define XXH_mult32to64(x, y) __emulu(x, y)
@@ -212,7 +211,7 @@ XXH_FORCE_INLINE U64x2 XXH_vec_revb(U64x2 val)
 #  else
 #    define XXH_vec_permxor __builtin_crypto_vpermxor
 #  endif
-#endif  /* XXH_VSX_BE */
+#endif
 /*
  * Because we reinterpret the multiply, there are endian memes: vec_mulo actually becomes
  * vec_mule.
@@ -235,23 +234,8 @@ XXH_FORCE_INLINE U64x2 XXH_vec_mule(U32x4 a, U32x4 b) {
     __asm__("vmuleuw %0, %1, %2" : "=v" (result) : "v" (a), "v" (b));
     return result;
 }
-#endif /* __has_builtin(__builtin_altivec_vmuleuw) */
-#endif /* XXH_VECTOR == XXH_VSX */
-
-/* prefetch
- * can be disabled, by declaring XXH_NO_PREFETCH build macro */
-#if defined(XXH_NO_PREFETCH)
-#  define XXH_PREFETCH(ptr)  (void)(ptr)  /* disabled */
-#else
-#  if defined(_MSC_VER) && (defined(_M_X64) || defined(_M_I86))  /* _mm_prefetch() is not defined outside of x86/x64 */
-#    include <mmintrin.h>   /* https://msdn.microsoft.com/fr-fr/library/84szxsww(v=vs.90).aspx */
-#    define XXH_PREFETCH(ptr)  _mm_prefetch((const char*)(ptr), _MM_HINT_T0)
-#  elif defined(__GNUC__) && ( (__GNUC__ >= 4) || ( (__GNUC__ == 3) && (__GNUC_MINOR__ >= 1) ) )
-#    define XXH_PREFETCH(ptr)  __builtin_prefetch((ptr), 0 /* rw==read */, 3 /* locality */)
-#  else
-#    define XXH_PREFETCH(ptr) (void)(ptr)  /* disabled */
-#  endif
-#endif  /* XXH_NO_PREFETCH */
+#endif
+#endif
 
 
 /* ==========================================
@@ -532,8 +516,7 @@ XXH3_accumulate_512(      void* XXH_RESTRICT acc,
             __m128i const key_vec = _mm_loadu_si128 (xsecret+i);
             __m128i const data_key = _mm_xor_si128 (data_vec, key_vec);                                  /* uint32 dk[8]  = {d0+k0, d1+k1, d2+k2, d3+k3, ...} */
             __m128i const product = _mm_mul_epu32 (data_key, _mm_shuffle_epi32 (data_key, 0x31));  /* uint64 mul[4] = {dk0*dk1, dk2*dk3, ...} */
-           
-			if (accWidth == XXH3_acc_128bits) {
+            if (accWidth == XXH3_acc_128bits) {
                 __m128i const data_swap = _mm_shuffle_epi32(data_vec, _MM_SHUFFLE(1,0,3,2));
                 __m128i const sum = _mm_add_epi64(xacc[i], data_swap);
                 xacc[i]  = _mm_add_epi64(product, sum);
@@ -813,7 +796,6 @@ XXH3_scrambleAcc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
     for (i=0; i < ACC_NB; i++) {
         xxh_u64 const key64 = XXH_readLE64(xsecret + 8*i);
         xxh_u64 acc64 = xacc[i];
-		xxh_u64 initacc = acc64; // DEBUG
         acc64 ^= acc64 >> 47;
         acc64 ^= key64;
         acc64 *= PRIME32_1;
@@ -823,11 +805,9 @@ XXH3_scrambleAcc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
 #endif
 }
 
-#define XXH_PREFETCH_DIST 384
-
 /* assumption : nbStripes will not overflow secret size */
 XXH_FORCE_INLINE void
-XXH3_accumulate(     xxh_u64* XXH_RESTRICT acc,
+XXH3_accumulate(       xxh_u64* XXH_RESTRICT acc,
                 const xxh_u8* XXH_RESTRICT input,
                 const xxh_u8* XXH_RESTRICT secret,
                       size_t nbStripes,
@@ -835,10 +815,8 @@ XXH3_accumulate(     xxh_u64* XXH_RESTRICT acc,
 {
     size_t n;
     for (n = 0; n < nbStripes; n++ ) {
-        const xxh_u8* const in = input + n*STRIPE_LEN;
-        XXH_PREFETCH(in + XXH_PREFETCH_DIST);
         XXH3_accumulate_512(acc,
-                            in,
+                            input  + n*STRIPE_LEN,
                             secret + n*XXH_SECRET_CONSUME_RATE,
                             accWidth);
     }
@@ -1243,17 +1221,14 @@ XXH_FORCE_INLINE void
 XXH3_digest_long (XXH64_hash_t* acc, const XXH3_state_t* state, XXH3_accWidth_e accWidth)
 {
     memcpy(acc, state->acc, sizeof(state->acc));  /* digest locally, state remains unaltered, and can continue ingesting more input afterwards */
-
     if (state->bufferedSize >= STRIPE_LEN) {
         size_t const totalNbStripes = state->bufferedSize / STRIPE_LEN;
         XXH32_hash_t nbStripesSoFar = state->nbStripesSoFar;
-
         XXH3_consumeStripes(acc,
                            &nbStripesSoFar, state->nbStripesPerBlock,
                             state->buffer, totalNbStripes,
                             state->secret, state->secretLimit,
                             accWidth);
-
         if (state->bufferedSize % STRIPE_LEN) {  /* one last partial stripe */
             XXH3_accumulate_512(acc,
                                 state->buffer + state->bufferedSize - STRIPE_LEN,
@@ -1277,9 +1252,7 @@ XXH_PUBLIC_API XXH64_hash_t XXH3_64bits_digest (const XXH3_state_t* state)
 {
     if (state->totalLen > XXH3_MIDSIZE_MAX) {
         XXH_ALIGN(XXH_ACC_ALIGN) XXH64_hash_t acc[ACC_NB];
-
         XXH3_digest_long(acc, state, XXH3_acc_64bits);
-
         return XXH3_mergeAccs(acc, state->secret + XXH_SECRET_MERGEACCS_START, (xxh_u64)state->totalLen * PRIME64_1);
     }
     /* len <= XXH3_MIDSIZE_MAX : short code */

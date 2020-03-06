@@ -114,10 +114,10 @@ int main(int argc, char** argv)
 
 	int res = 0, all = 0;
 
-	constexpr int32_t test_num = 100;
+	constexpr int32_t test_num = 1024;
 
 	std::minstd_rand rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()));
-	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
+	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U); 
 
 
 	for (size_t i = 0; i < test_num; i++)
@@ -152,7 +152,7 @@ int main(int argc, char** argv)
 		xxh::hash3_state64_t hash3_state_64_cpp_seed(seed);
 		xxh::hash3_state128_t hash3_state_128_cpp_seed(seed);
 		XXH3_state_t* hash3_state_64_c_seed = XXH3_createState();
-		XXH3_state_t* hash3_state_128_c_seed = XXH3_createState();   
+		XXH3_state_t* hash3_state_128_c_seed = XXH3_createState();
 
 		XXH3_64bits_reset_withSeed(hash3_state_64_c_seed, seed);
 		XXH3_128bits_reset_withSeed(hash3_state_128_c_seed, seed);

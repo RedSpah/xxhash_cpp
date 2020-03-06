@@ -49,18 +49,16 @@ Lookup3         1.2 GB/s      9       Bob Jenkins
 SuperFastHash   1.2 GB/s      1       Paul Hsieh
 CityHash64      1.05 GB/s    10       Pike & Alakuijala
 FNV             0.55 GB/s     5       Fowler, Noll, Vo
-CRC32           0.43 GB/s     9
+CRC32           0.43 GB/s †   9
 MD5-32          0.33 GB/s    10       Ronald L. Rivest
 SHA1-32         0.28 GB/s    10
+
+Note †: other CRC32 implementations can be over 40x faster than SMHasher's:
+http://fastcompression.blogspot.com/2019/03/presenting-xxh3.html?showComment=1552696407071#c3490092340461170735
 
 Q.Score is a measure of quality of the hash function.
 It depends on successfully passing SMHasher test set.
 10 is a perfect score.
-
-Note : SMHasher's CRC32 implementation is not the fastest one.
-Other speed-oriented implementations can be faster,
-especially in combination with PCLMUL instruction :
-http://fastcompression.blogspot.com/2019/03/presenting-xxh3.html?showComment=1552696407071#c3490092340461170735
 
 A 64-bit version, named XXH64, is available since r35.
 It offers much better speed, but for 64-bit applications only.
@@ -268,10 +266,10 @@ XXH_PUBLIC_API XXH32_hash_t XXH32_hashFromCanonical(const XXH32_canonical_t* src
 #endif
 
 /*! XXH64() :
- *  Returns the 64-bit hash of sequence of length @length stored at memory address @input.
- *  @seed can be used to alter the result predictably.
- *  This function runs faster on 64-bit systems, but slower on 32-bit systems (see benchmark).
- */
+    Calculate the 64-bit hash of sequence of length "len" stored at memory address "input".
+    "seed" can be used to alter the result predictably.
+    This function runs faster on 64-bit systems, but slower on 32-bit systems (see benchmark).
+*/
 XXH_PUBLIC_API XXH64_hash_t XXH64 (const void* input, size_t length, XXH64_hash_t seed);
 
 /*======   Streaming   ======*/
@@ -292,26 +290,16 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src
 
 #endif  /* XXH_NO_LONG_LONG */
 
-#if defined (__cplusplus)
-}
-#endif
-
-#endif /* XXHASH_H_5627135585666179 */
 
 
+#ifdef XXH_STATIC_LINKING_ONLY
 
-#if defined(XXH_STATIC_LINKING_ONLY) && !defined(XXHASH_H_STATIC_13879238742)
-#define XXHASH_H_STATIC_13879238742
 /* ================================================================================================
    This section contains declarations which are not guaranteed to remain stable.
    They may change in future versions, becoming incompatible with a different version of the library.
    These declarations should only be used with static linking.
    Never use them in association with dynamic linking !
 =================================================================================================== */
-
-#if defined (__cplusplus)
-extern "C" {
-#endif
 
 /* These definitions are only present to allow
  * static allocation of XXH state, on stack or in a struct for example.
@@ -329,9 +317,7 @@ struct XXH32_state_s {
    XXH32_hash_t reserved;   /* never read nor write, might be removed in a future version */
 };   /* typedef'd to XXH32_state_t */
 
-
-#ifndef XXH_NO_LONG_LONG  /* defined when there is no 64-bit support */
-
+#ifndef XXH_NO_LONG_LONG  /* remove 64-bit support */
 struct XXH64_state_s {
    XXH64_hash_t total_len;
    XXH64_hash_t v1;
@@ -343,12 +329,15 @@ struct XXH64_state_s {
    XXH32_hash_t reserved32;  /* required for padding anyway */
    XXH64_hash_t reserved64;  /* never read nor write, might be removed in a future version */
 };   /* typedef'd to XXH64_state_t */
+#endif   /* XXH_NO_LONG_LONG */
 
 
 /*-**********************************************************************
 *  XXH3
 *  New experimental hash
 ************************************************************************/
+#ifndef XXH_NO_LONG_LONG
+
 
 /* ============================================
  * XXH3 is a new hash algorithm,
@@ -579,24 +568,20 @@ XXH_PUBLIC_API XXH128_hash_t XXH128_hashFromCanonical(const XXH128_canonical_t* 
 #endif  /* XXH_NO_LONG_LONG */
 
 
-/*BANDAIDS*/
-using xxh_u8 = uint8_t;
-using xxh_u16 = uint16_t;
-using xxh_u32 = uint32_t;
-using xxh_u64 = uint64_t;
-
-#define XXH_FORCE_INLINE
-#define XXH_NO_INLINE
-
 /*-**********************************************************************
 *  XXH_INLINE_ALL
 ************************************************************************/
 #if defined(XXH_INLINE_ALL) || defined(XXH_PRIVATE_API)
-//#  include "xxhash.c"   /* include xxhash function bodies as `static`, for inlining */
+#  include "xxhash.cpp"   /* include xxhash function bodies as `static`, for inlining */
 #endif
+
+
+
+#endif /* XXH_STATIC_LINKING_ONLY */
+
 
 #if defined (__cplusplus)
 }
 #endif
 
-#endif /* defined(XXH_STATIC_LINKING_ONLY) && !defined(XXHASH_H_STATIC_13879238742) */
+#endif /* XXHASH_H_5627135585666179 */
