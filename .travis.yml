@@ -52,7 +52,7 @@ matrix:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-bionic-7
       compiler: clang
-      env: "COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O2 -g -mavx2 -march=native -Wall -Wpedantic -Wextra \" LIBS=\"\""
+      env: "COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O1 -g -mavx2 -march=native -Wall -Wpedantic -Wextra \" LIBS=\"\""
 os: linux
 script: 
   - "cd ./xxhash"
