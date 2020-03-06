@@ -403,7 +403,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		alignas(64) XXH3_state_t hash3_state_128_c_seed;
 
 		XXH3_64bits_reset_withSeed(&hash3_state_64_c_seed, seed);
-		XXH3_128bits_reset_withSeed(&hash3_state_128_c_seed, seed);
+		XXH3_128bits_reset_withSeed(&hash3_state_128_c_seed, seed); 
 
 
 

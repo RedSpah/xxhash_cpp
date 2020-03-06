@@ -58,7 +58,7 @@ script:
   - "cd ./xxhash"
 #  - "make OUTNAME=test0 CMDARGS=\"-DXXH_VECTOR=0\""
 #  - "make OUTNAME=test1 CMDARGS=\"-DXXH_VECTOR=1\""
-  - "make OUTNAME=test CMDARGS=\"-DXXH_VECTOR=2\""
+  - "make OUTNAME=test CMDARGS=\"-DXXH_VECTOR=1\""
 #  - ./test0
 #  - ./test1
   - ./test
