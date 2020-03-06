@@ -35,7 +35,7 @@ void handler(int sig) {
 
 #define XXH_STATIC_LINKING_ONLY
 
-#define XXH_VECTOR 1
+#define XXH_VECTOR 0
 #include "xxhash.hpp"
 
 
