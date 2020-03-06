@@ -813,6 +813,7 @@ XXH3_scrambleAcc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
     for (i=0; i < ACC_NB; i++) {
         xxh_u64 const key64 = XXH_readLE64(xsecret + 8*i);
         xxh_u64 acc64 = xacc[i];
+		xxh_u64 initacc = acc64; // DEBUG
         acc64 ^= acc64 >> 47;
         acc64 ^= key64;
         acc64 *= PRIME32_1;
@@ -1242,14 +1243,17 @@ XXH_FORCE_INLINE void
 XXH3_digest_long (XXH64_hash_t* acc, const XXH3_state_t* state, XXH3_accWidth_e accWidth)
 {
     memcpy(acc, state->acc, sizeof(state->acc));  /* digest locally, state remains unaltered, and can continue ingesting more input afterwards */
+
     if (state->bufferedSize >= STRIPE_LEN) {
         size_t const totalNbStripes = state->bufferedSize / STRIPE_LEN;
         XXH32_hash_t nbStripesSoFar = state->nbStripesSoFar;
+
         XXH3_consumeStripes(acc,
                            &nbStripesSoFar, state->nbStripesPerBlock,
                             state->buffer, totalNbStripes,
                             state->secret, state->secretLimit,
                             accWidth);
+
         if (state->bufferedSize % STRIPE_LEN) {  /* one last partial stripe */
             XXH3_accumulate_512(acc,
                                 state->buffer + state->bufferedSize - STRIPE_LEN,
@@ -1273,7 +1277,9 @@ XXH_PUBLIC_API XXH64_hash_t XXH3_64bits_digest (const XXH3_state_t* state)
 {
     if (state->totalLen > XXH3_MIDSIZE_MAX) {
         XXH_ALIGN(XXH_ACC_ALIGN) XXH64_hash_t acc[ACC_NB];
+
         XXH3_digest_long(acc, state, XXH3_acc_64bits);
+
         return XXH3_mergeAccs(acc, state->secret + XXH_SECRET_MERGEACCS_START, (xxh_u64)state->totalLen * PRIME64_1);
     }
     /* len <= XXH3_MIDSIZE_MAX : short code */

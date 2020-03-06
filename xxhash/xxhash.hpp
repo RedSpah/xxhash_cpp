@@ -92,43 +92,56 @@ namespace xxh
 		* machines to test them, and the secondary reason is that I even doubt anyone writing
 		* code for such machines would bother using a C++ port rather than the original C version.
 		*/
-#ifndef XXH_VECTOR    /* can be defined on command line */
-#  if defined(__AVX2__)
-		constexpr int vector_mode = 2;
-		constexpr int acc_align = 32;
-		using _vec128_underlying = __m128i;
-		using _vec256_underlying = __m256i;
-#  elif defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2))
-		constexpr int vector_mode = 1;
-		constexpr int acc_align = 16;
-		using _vec128_underlying = __m128i;
-		using _vec256_underlying = __m256i;
-		//using _vec256_underlying = std::array<uint8_t, 32>;
-#  else /* what in tarnation are you using this library on*/
-		constexpr int vector_mode = 0;
-		constexpr int acc_align = 8;
-		using _vec128_underlying = __m128i;
-		using _vec256_underlying = __m256i;
-		//using _vec128_underlying = std::array<uint8_t, 16>;
-		//using _vec256_underlying = std::array<uint8_t, 32>;
-#  endif
+#ifndef XXH_VECTOR   /* can be predefined on command line */
+#	if defined(__AVX2__)
+#		define XXH_VECTOR 2
+#	elif defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2))
+#		define XXH_VECTOR 1
+#	else
+#		define XXH_VECTOR 0
+#	endif
 #endif
+
+#if XXH_VECTOR == 2
+	constexpr int vector_mode = 2;
+	constexpr int acc_align = 32;
+	using _vec128_underlying = __m128i;
+	using _vec256_underlying = __m256i;
+#elif XXH_VECTOR == 1
+	constexpr int vector_mode = 1;
+	constexpr int acc_align = 16;
+	using _vec128_underlying = __m128i;
+	using _vec256_underlying = __m256i;
+#else
+	constexpr int vector_mode = 0;
+	constexpr int acc_align = 8;
+	using _vec128_underlying = __m128i;
+	using _vec256_underlying = __m256i;
+#endif
+
 
 		/* Compiler Specifics
 		* Defines inline macros and includes specific compiler's instrinsics.
 		* */
+#ifdef XXH_FORCE_INLINE /* First undefining the symbols in case they're already defined */
+#	undef XXH_FORCE_INLINE
+#endif 
+#ifdef XXH_NO_INLINE
+#	undef XXH_NO_INLINE
+#endif
+
 #ifdef _MSC_VER    /* Visual Studio */
-#  pragma warning(disable : 4127)    
-#  define XXH_FORCE_INLINE static __forceinline
-#  define XXH_NO_INLINE static __declspec(noinline)
-#  include <intrin.h>
+#	pragma warning(disable : 4127)    
+#	define XXH_FORCE_INLINE static __forceinline
+#	define XXH_NO_INLINE static __declspec(noinline)
+#	include <intrin.h>
 #elif defined(__GNUC__)  /* Clang / GCC */
-#  define XXH_FORCE_INLINE static inline __attribute__((always_inline))
-#  define XXH_NO_INLINE static __attribute__((noinline))
-#  include <mmintrin.h>
+#	define XXH_FORCE_INLINE static inline __attribute__((always_inline))
+#	define XXH_NO_INLINE static __attribute__((noinline))
+#	include <mmintrin.h>
 #else
-#  define XXH_FORCE_INLINE static inline
-#  define XXH_NO_INLINE static
+#	define XXH_FORCE_INLINE static inline
+#	define XXH_NO_INLINE static
 #endif
 
 
@@ -150,10 +163,14 @@ namespace xxh
 		* Defines macro for restrict, which in C++ is sadly just a compiler extension (for now).
 		* Can be disabled by defining XXH_NO_RESTRICT
 		*/
+#ifdef XXH_RESTRICT
+#	undef XXH_RESTRICT
+#endif
+
 #if (defined(__GNUC__) || defined(_MSC_VER)) && defined(__cplusplus) && !defined(XXH_NO_RESTRICT)
-#  define XXH_RESTRICT  __restrict
+#	define XXH_RESTRICT  __restrict
 #else
-#  define XXH_RESTRICT 
+#	define XXH_RESTRICT 
 #endif
 
 		/* Has to be predeclared here for use with mul64to128 */
@@ -221,15 +238,15 @@ namespace xxh
 
 #else
 
-				uint64_t  const lo_lo = bit_ops::mult32to64(lhs & 0xFFFFFFFF, rhs & 0xFFFFFFFF);
-				uint64_t  const hi_lo = bit_ops::mult32to64(lhs >> 32, rhs & 0xFFFFFFFF);
-				uint64_t  const lo_hi = bit_ops::mult32to64(lhs & 0xFFFFFFFF, rhs >> 32);
-				uint64_t  const hi_hi = bit_ops::mult32to64(lhs >> 32, rhs >> 32);
+				uint64_t const lo_lo = bit_ops::mult32to64(lhs & 0xFFFFFFFF, rhs & 0xFFFFFFFF);
+				uint64_t const hi_lo = bit_ops::mult32to64(lhs >> 32, rhs & 0xFFFFFFFF);
+				uint64_t const lo_hi = bit_ops::mult32to64(lhs & 0xFFFFFFFF, rhs >> 32);
+				uint64_t const hi_hi = bit_ops::mult32to64(lhs >> 32, rhs >> 32);
 
 				/* Now add the products together. These will never overflow. */
-				uint64_t  const cross = (lo_lo >> 32) + (hi_lo & 0xFFFFFFFF) + lo_hi;
-				uint64_t  const upper = (hi_lo >> 32) + (cross >> 32) + hi_hi;
-				uint64_t  const lower = (cross << 32) | (lo_lo & 0xFFFFFFFF);
+				uint64_t const cross = (lo_lo >> 32) + (hi_lo & 0xFFFFFFFF) + lo_hi;
+				uint64_t const upper = (hi_lo >> 32) + (cross >> 32) + hi_hi;
+				uint64_t const lower = (cross << 32) | (lo_lo & 0xFFFFFFFF);
 
 				_uint128 r128 = { lower, upper };
 				return r128;
@@ -342,7 +359,7 @@ namespace xxh
 		};
 
 		template <size_t N>
-		inline uint_t<N> swap(hash_t<N> n) 
+		inline uint_t<N> swap(uint_t<N> n)
 		{
 			if constexpr (N == 32)
 			{
@@ -396,6 +413,7 @@ namespace xxh
 		inline uint32_t read32(const void* memPtr) { return read_unaligned<32>(memPtr); }
 		inline uint64_t read64(const void* memPtr) { return read_unaligned<64>(memPtr); }
 
+
 		/* *************************************
 		*  Endianness
 		***************************************/
@@ -411,10 +429,10 @@ namespace xxh
 			return get_endian(endianness::unspecified) == endianness::little_endian;
 		}
 
+
 		/* ***************************
 		*  Memory reads
 		*****************************/
-
 
 		template <size_t N>
 		inline uint_t<N> readLE_align(const void* ptr, endianness endian, alignment align)
@@ -484,7 +502,7 @@ namespace xxh
 
 			if constexpr (N == 64)
 			{
-				return mem_ops::read_unaligned<64>(input);
+				return mem_ops::readLE<64>(input);
 			}
 		}
 
@@ -616,7 +634,7 @@ namespace xxh
 
 			if constexpr (N == 64)
 			{
-				return bit_ops::rotr<64>(n, a);
+				return n >> a;
 			}
 		};
 
@@ -638,7 +656,7 @@ namespace xxh
 
 			if constexpr (N == 64)
 			{
-				return bit_ops::rotl<64>(n, a);
+				return n << a;
 			}
 		};
 	}
@@ -884,24 +902,39 @@ namespace xxh
 				if constexpr (bits > 64)
 				{
 					product = mul<bits>(data_key, vec_ops::shuffle<bits, 0, 3, 0, 1>(data_key));
+
+					if (width == acc_width::acc_128bits)
+					{
+
+						vec_t const data_swap = shuffle<bits, 1, 0, 3, 2>(data_vec);
+						vec_t const sum = add<bits>(xacc[i], data_swap);
+
+						xacc[i] = add<bits>(sum, product);
+					}
+					else
+					{
+						vec_t const sum = add<bits>(xacc[i], data_vec);
+						xacc[i] = add<bits>(sum, product);
+					}
 				}
 				else 
 				{
 					product = mul32to64(data_key & 0xFFFFFFFF, data_key >> 32);
-				}
 
-				if (width == acc_width::acc_128bits)
-				{
-					vec_t const data_swap = shuffle<bits, 1, 0, 3, 2>(data_vec);
-					vec_t const sum = add<bits>(xacc[i], data_swap);
-					
-					xacc[i ^ a512_i_xor[static_cast<uint8_t>(V)]] = add<bits>(sum, product);
-				}	
-				else
-				{
-					vec_t const sum = add<bits>(xacc[i], data_vec);
-					xacc[i] = add<bits>(sum, product);
+					if (width == acc_width::acc_128bits)
+					{
+						xacc[i ^ 1] = add<bits>(xacc[i ^ 1], data_vec);				
+					}
+					else
+					{
+						xacc[i] = add<bits>(xacc[i], data_vec);
+					}
+
+					xacc[i] = add<bits>(xacc[i], product);
 				}
+					
+				
+				
 			}
 		}
 
@@ -913,7 +946,6 @@ namespace xxh
 
 			alignas(sizeof(vec_t)) vec_t* const xacc = (vec_t*)acc;
 			const vec_t* const xsecret = (const vec_t*)secret;  
-			const vec_t prime32 = set1<bits>(PRIME<32>(1));
 
 			for (size_t i = 0; i < stripe_len / sizeof(vec_t); i++)
 			{
@@ -923,9 +955,11 @@ namespace xxh
 
 				vec_t const key_vec = loadu<bits>(xsecret + i);
 				vec_t const data_key = xorv<bits>(data_vec, key_vec);
+				
 
-				if constexpr (bits > 64)
+				if constexpr (bits > 64)	
 				{
+					vec_t const prime32 = set1<bits>(PRIME<32>(1));
 					vec_t const data_key_hi = shuffle<bits, 0, 3, 0, 1>(data_key);
 					vec_t const prod_lo = mul<bits>(data_key, prime32);
 					vec_t const prod_hi = mul<bits>(data_key_hi, prime32);
@@ -934,7 +968,7 @@ namespace xxh
 				}
 				else 
 				{
-					xacc[i] = mul<bits>(prime32, data_key);
+					xacc[i] = mul<bits>(data_key, PRIME<32>(1));
 				}
 			}
 		}
@@ -1216,15 +1250,15 @@ namespace xxh
 				acc.low64 = len * PRIME<64>(1);
 				acc.high64 = 0;
 
-				for (int i = 0; i < 4; i++) {
-					acc = mix_32b(acc, input + (32 * i), input + (32 * i) + 16, secret + (32 * i), seed);
+				for (size_t i = 0; i < 4; i++) {
+					acc = mix_32b(acc, input + (i * 32), input + (i * 32) + 16, secret + (i * 32), seed);
 				}
 
 				acc.low64 = avalanche(acc.low64);
 				acc.high64 = avalanche(acc.high64);
 
-				for (int i = 4; i < nbRounds; i++) {
-					acc = mix_32b(acc, input + (32 * i), input + (32 * i) + 16, secret + midsize_startoffset + (32 * (i - 4)), seed);
+				for (size_t i = 4; i < nbRounds; i++) {
+					acc = mix_32b(acc, input + (i * 32), input + (i * 32) + 16, secret + midsize_startoffset + ((i - 4) * 32), seed);
 				}
 
 				/* last bytes */
@@ -1443,11 +1477,14 @@ namespace xxh
 			const uint8_t* const bEnd = reinterpret_cast<const uint8_t*>(mem.data()) + memsize;
 			hash_t<N> hash_ret;
 
-			if (total_len > (N / 2))
+			if (total_len >= (N / 2))
 			{
 				hash_ret = bit_ops::rotl<N>(v1, 1) + bit_ops::rotl<N>(v2, 7) + bit_ops::rotl<N>(v3, 12) + bit_ops::rotl<N>(v4, 18);
 
-				detail::endian_align_sub_mergeround<N>(hash_ret, v1, v2, v3, v4);
+				if constexpr (N == 64)
+				{
+					detail::endian_align_sub_mergeround<N>(hash_ret, v1, v2, v3, v4);
+				}
 			}
 			else { hash_ret = v3 + detail::PRIME<N>(5); }
 
@@ -1546,19 +1583,19 @@ namespace xxh
 		uint64_t reserved64 = 0;
 		const uint8_t* secret = nullptr;    /* note : there is some padding after, due to alignment on 64 bytes */
 
-		void consume_stripes(const uint8_t* input, detail3::acc_width accWidth)
+		void consume_stripes(uint64_t* acc, uint32_t& nbStripesSoFar, size_t totalStripes, const uint8_t* input, detail3::acc_width accWidth)
 		{
-			if (nbStripesPerBlock - nbStripesSoFar <= internal_buffer_stripes) {
+			if (nbStripesPerBlock - nbStripesSoFar <= totalStripes) {
 				/* need a scrambling operation */
 				size_t const nbStripes = nbStripesPerBlock - nbStripesSoFar;
 				detail3::accumulate(acc, input, secret + nbStripesSoFar * detail3::secret_consume_rate, nbStripes, accWidth);
 				detail3::scramble_acc<detail3::vector_mode>(acc, secret + secretLimit);
-				detail3::accumulate(acc, input + nbStripes * detail3::stripe_len, secret, internal_buffer_stripes - nbStripes, accWidth);
-				nbStripesSoFar = (uint32_t)(internal_buffer_stripes - nbStripes);
+				detail3::accumulate(acc, input + nbStripes * detail3::stripe_len, secret, totalStripes - nbStripes, accWidth);
+				nbStripesSoFar = (uint32_t)(totalStripes - nbStripes);
 			}
 			else {
-				detail3::accumulate(acc, input, secret + nbStripesSoFar * detail3::secret_consume_rate, internal_buffer_stripes, accWidth);
-				nbStripesSoFar += (uint32_t)internal_buffer_stripes;
+				detail3::accumulate(acc, input, secret + nbStripesSoFar * detail3::secret_consume_rate, totalStripes, accWidth);
+				nbStripesSoFar += (uint32_t)totalStripes;
 			}
 		}
 
@@ -1588,7 +1625,7 @@ namespace xxh
 				size_t const loadSize = internal_buffer_size - bufferedSize;
 				memcpy(buffer + bufferedSize, input, loadSize);
 				input += loadSize;
-				consume_stripes(buffer, accWidth);
+				consume_stripes(acc, nbStripesSoFar, internal_buffer_stripes, buffer, accWidth);
 				bufferedSize = 0;
 			}
 
@@ -1596,7 +1633,7 @@ namespace xxh
 			if (input + internal_buffer_size <= bEnd) {
 				const uint8_t* const limit = bEnd - internal_buffer_size;
 				do {
-					consume_stripes(input, accWidth);
+					consume_stripes(acc, nbStripesSoFar, internal_buffer_stripes, input, accWidth);
 					input += internal_buffer_size;
 				} while (input <= limit);
 			}
@@ -1613,13 +1650,15 @@ namespace xxh
 		void digest_long(hash64_t* acc_, detail3::acc_width accWidth)
 		{
 			memcpy(acc_, acc, sizeof(acc));  /* digest locally, state remains unaltered, and can continue ingesting more input afterwards */
+
 			if (bufferedSize >= detail3::stripe_len) {
 				size_t const totalNbStripes = bufferedSize / detail3::stripe_len;
-				uint32_t nbStripesSoFar = nbStripesSoFar;
-				consume_stripes(buffer, accWidth);
+				uint32_t nbStripesSoFar = this->nbStripesSoFar;
+
+				consume_stripes(acc_, nbStripesSoFar, totalNbStripes, buffer, accWidth);
 
 				if (bufferedSize % detail3::stripe_len) {  /* one last partial stripe */
-					detail3::accumulate_512<detail3::vector_mode>(acc, buffer + bufferedSize - detail3::stripe_len, secret + secretLimit - detail3::secret_lastacc_start, accWidth);
+					detail3::accumulate_512<detail3::vector_mode>(acc_, buffer + bufferedSize - detail3::stripe_len, secret + secretLimit - detail3::secret_lastacc_start, accWidth);
 				}
 			}
 			else {  /* bufferedSize < STRIPE_LEN */
@@ -1628,7 +1667,7 @@ namespace xxh
 					size_t const catchupSize = detail3::stripe_len - bufferedSize;
 					memcpy(lastStripe, buffer + sizeof(buffer) - catchupSize, catchupSize);
 					memcpy(lastStripe + catchupSize, buffer, bufferedSize);
-					detail3::accumulate_512<detail3::vector_mode>(acc, lastStripe, secret + secretLimit - detail3::secret_lastacc_start, accWidth);
+					detail3::accumulate_512<detail3::vector_mode>(acc_, lastStripe, secret + secretLimit - detail3::secret_lastacc_start, accWidth);
 				}
 			}
 		}
@@ -1714,6 +1753,7 @@ namespace xxh
 
 			if (totalLen > detail3::midsize_max) {
 				alignas(detail3::acc_align) hash64_t acc[detail3::acc_nb];
+				
 				digest_long(acc, accWidth);
 
 				if constexpr (N == 64)
@@ -1727,8 +1767,10 @@ namespace xxh
 					return  { low64, high64 };
 				}
 			}
-			
-			return detail3::xxhash3<N>(buffer, (size_t)totalLen, seed, secret, secretLimit + detail3::stripe_len);			
+			else
+			{
+				return detail3::xxhash3<N>(buffer, (size_t)totalLen, seed, secret, secretLimit + detail3::stripe_len);
+			}
 		}
 	};
 

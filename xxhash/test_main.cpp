@@ -33,11 +33,13 @@ void handler(int sig) {
 #endif
 */
 
+//#define XXH_VECTOR 0
+#include "xxhash.hpp"
 
 #define XXH_STATIC_LINKING_ONLY
-#include "xxhash.hpp"
+
 //#include "xxhash.h"
-#undef XXH_VECTOR
+//#undef XXH_VECTOR
 
 #include "xxh3.h"
 
@@ -92,25 +94,27 @@ bool cool_cmp(T1 a, T2 b)
 	return good;
 }
 
+
+
 std::string pretty_time(uint64_t ns)
 {
 	std::string out = "";
 
 	if (ns > 1000000000)
 	{
-		int32_t sec = ns / 1000000000;
+		uint64_t sec = ns / 1000000000;
 		ns %= 1000000000;
 		out += std::to_string(sec) + "s ";
 	}
 	if (ns > 1000000)
 	{
-		int32_t ms = ns / 1000000;
+		uint64_t ms = ns / 1000000;
 		ns %= 1000000;
 		out += std::to_string(ms) + "ms ";
 	}
 	if (ns > 1000)
 	{
-		int32_t us = ns / 1000;
+		uint64_t us = ns / 1000;
 		ns %= 1000;
 		out += std::to_string(us) + "us ";
 	}
@@ -129,13 +133,10 @@ bool operator == (XXH128_hash_t h1, xxh::hash128_t h2)
 
 int main(int argc, char** argv)
 {
-//#ifdef __GNU_C__
-//	signal(SIGSEGV, handler);
-///#endif
 
 	int res = Catch::Session().run(argc, argv);
 
-	
+	/*
 	std::cout << "Naive Benchmark\n\n";
 	{
 		std::cout << "\n=== 64BIT: ===\n\n";;
@@ -336,7 +337,7 @@ int main(int argc, char** argv)
 		}
 	}
 	
-
+	*/
 	std::cin.get();
 	return res;
 }
@@ -376,15 +377,18 @@ TEST_CASE("Results are the same as the original implementation for small inputs"
 TEST_CASE("Results are the same as the original implementation for large, randomly generated inputs", "[compatibility]")
 {
 	constexpr int32_t test_num = 1024;
-	constexpr size_t test_buf_size = (1 << 16);
+	//constexpr size_t test_buf_size = (1 << 16);
 
-	std::minstd_rand rng(std::chrono::system_clock::now().time_since_epoch().count());
+	std::minstd_rand rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()));
 	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
 
 	
 
-	for (int i = 0; i < test_num; i++)
+	for (size_t i = 0; i < test_num; i++)
 	{
+		size_t test_buf_size = i + 1;
+		
+
 		std::vector<uint32_t> input_buffer;	
 
 		std::array<uint8_t, xxh::detail3::secret_size_min> secret_min_size;
@@ -397,9 +401,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		std::generate(secret_default_size.begin(), secret_default_size.end(), [&rng, &dist]() {return dist(rng); });
 		std::generate(secret_plus_size.begin(), secret_plus_size.end(), [&rng, &dist]() {return dist(rng); });
 
-		uint64_t seed = ((static_cast<uint64_t>(dist(rng)) << 32) + dist(rng));
-
-		
+		uint32_t seed = dist(rng);
 
 		xxh::hash_state32_t hash_state_32_cpp(seed);
 		xxh::hash_state64_t hash_state_64_cpp(seed);
@@ -539,14 +541,96 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		
 		REQUIRE(XXH32(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<32>(input_buffer, seed));
 		REQUIRE(XXH64(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash<64>(input_buffer, seed));
+		/*
+		std::array<uint8_t, xxh::detail3::secret_default_size> secret_c, secret_cpp;
+		XXH3_initCustomSecret(secret_c.data(), seed);
+		xxh::detail3::init_custom_secret(secret_cpp.data(), seed);
 
-		std::array<int, xxh::detail3::secret_default_size> secret_c, secret_cpp;
-		XXH3_initCustomSecret((uint8_t*)(void*)secret_c.data(), seed);
-		xxh::detail3::init_custom_secret((uint8_t*)(void*)secret_cpp.data(), seed);
-
+		//std::cout << "Comparing secrets | test_num = " << i << "\n";
 		if (cool_cmp(secret_c, secret_cpp))
 		{
-			std::cout << "Secrets Identical.\n";
+		//	std::cout << "Secrets Identical.\n";
+		}
+		//uint64_t c = 
+
+		XXH_ALIGN(XXH_ACC_ALIGN) std::array<xxh_u64, ACC_NB> acc_c = XXH3_INIT_ACC;
+		alignas(xxh::detail3::acc_align) std::array<uint64_t, xxh::detail3::acc_nb> acc_cpp = xxh::detail3::init_acc;
+
+		if (cool_cmp(acc_c, acc_cpp))
+		{
+		//	std::cout << "Initial accumulators identical.\n";
+		}
+
+		xxh::detail3::accumulate_512<xxh::vec_mode::scalar>(acc_cpp.data(), input_buffer.data(), secret_cpp.data(), xxh::detail3::acc_width::acc_128bits);
+		XXH3_accumulate_512(acc_c.data(), input_buffer.data(), secret_c.data(), XXH3_accWidth_e::XXH3_acc_128bits);
+
+		if (cool_cmp(acc_c, acc_cpp))
+		{
+		//	std::cout << "Accumulate 512 accumulators identical.\n";
+		}
+
+		acc_c = XXH3_INIT_ACC;
+		acc_cpp = xxh::detail3::init_acc;
+
+		size_t const nb_rounds = (xxh::detail3::secret_default_size - xxh::detail3::stripe_len) / xxh::detail3::secret_consume_rate;
+
+		xxh::detail3::accumulate(acc_cpp.data(), (uint8_t*)(void*)input_buffer.data(), secret_cpp.data(), nb_rounds, xxh::detail3::acc_width::acc_128bits);
+		XXH3_accumulate(acc_c.data(), (uint8_t*)(void*)input_buffer.data(), secret_c.data(), nb_rounds, XXH3_accWidth_e::XXH3_acc_128bits);
+
+		if (cool_cmp(acc_c, acc_cpp))
+		{
+		//	std::cout << "Accumulate accumulators identical.\n";
+		}
+
+
+		acc_c = XXH3_INIT_ACC;
+		acc_cpp = xxh::detail3::init_acc;
+
+		xxh::detail3::scramble_acc<xxh::vec_mode::scalar>(acc_cpp.data(), secret_cpp.data());
+		XXH3_scrambleAcc(acc_c.data(), secret_c.data());
+
+		if (cool_cmp(acc_c, acc_cpp))
+		{
+		//	std::cout << "Scramble acc accumulators identical.\n";
+		}
+
+		//std::cin.get();
+
+
+		acc_c = XXH3_INIT_ACC;
+		acc_cpp = xxh::detail3::init_acc;
+
+		xxh::detail3::hash_long_internal_loop(acc_cpp.data(), (uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), (uint8_t*)(void*)secret_cpp.data(), xxh::detail3::secret_default_size, xxh::detail3::acc_width::acc_128bits);
+		XXH3_hashLong_internal_loop(acc_c.data(), (uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), (uint8_t*)(void*)secret_cpp.data(), xxh::detail3::secret_default_size, XXH3_accWidth_e::XXH3_acc_128bits);
+
+		if (cool_cmp(acc_c, acc_cpp))
+		{
+		//	std::cout << "Hash long internal loop accumulators identical.\n";
+		}
+
+		XXH128_hash_t c_res = XXH3_hashLong_128b_internal((uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_c.data(), xxh::detail3::secret_default_size);
+		xxh::uint128_t cpp_res = xxh::detail3::hash_long_internal<128>((uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_cpp.data());
+
+		REQUIRE(c_res.high64 == cpp_res.high64 );
+		REQUIRE(c_res.low64 == cpp_res.low64);
+
+		REQUIRE(XXH3_hashLong_internal((uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_c.data(), xxh::detail3::secret_default_size) == xxh::detail3::hash_long_internal<64>((uint8_t*)(void*)input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_cpp.data()));
+		*/
+
+		XXH_ALIGN(XXH_ACC_ALIGN) std::array<xxh_u64, ACC_NB> acc_c = XXH3_INIT_ACC;
+		alignas(xxh::detail3::acc_align) std::array<uint64_t, xxh::detail3::acc_nb> acc_cpp = xxh::detail3::init_acc;
+
+		if (cool_cmp(acc_c, acc_cpp))
+		{
+			//	std::cout << "Initial accumulators identical.\n";
+		}
+
+		//xxh::detail3::accumulate_512<xxh::vec_mode::scalar>(acc_cpp.data(), input_buffer.data(), secret_cpp.data(), xxh::detail3::acc_width::acc_128bits);
+		//XXH3_accumulate_512(acc_c.data(), input_buffer.data(), secret_c.data(), XXH3_accWidth_e::XXH3_acc_128bits);
+
+		if (cool_cmp(acc_c, acc_cpp))
+		{
+			//	std::cout << "Accumulate 512 accumulators identical.\n";
 		}
 
 		REQUIRE(XXH3_64bits_withSeed(input_buffer.data(), test_buf_size * sizeof(uint32_t), seed) == xxh::xxhash3<64>(input_buffer, seed));
@@ -561,6 +645,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		REQUIRE(XXH3_64bits_withSecret(input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_min_size.data(), secret_min_size.size()) == xxh::xxhash3<64>(input_buffer, 0, secret_min_size.data(), secret_min_size.size()));
 		REQUIRE(XXH3_128bits_withSecret(input_buffer.data(), test_buf_size * sizeof(uint32_t), secret_min_size.data(), secret_min_size.size()) == xxh::xxhash3<128>(input_buffer, 0, secret_min_size.data(), secret_min_size.size()));
 
+		
 		
 
 		REQUIRE(XXH32_digest(hash_state_32_c) == hash_state_32_cpp.digest());
@@ -600,6 +685,8 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		REQUIRE(XXH64_hashFromCanonical(&canonical3_64_c_secmin) == canonical3_64_cpp_secmin.get_hash());
 		REQUIRE(XXH128_hashFromCanonical(&canonical3_128_c_secmin).high64 == canonical3_128_cpp_secmin.get_hash().high64);
 		REQUIRE(XXH128_hashFromCanonical(&canonical3_128_c_secmin).low64 == canonical3_128_cpp_secmin.get_hash().low64);
+
+		
 	}
 }
 

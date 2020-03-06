@@ -598,6 +598,7 @@ XXH32_update(XXH32_state_t* state, const void* input, size_t len)
     return XXH_OK;
 }
 
+#include <iostream>
 
 XXH_PUBLIC_API XXH32_hash_t XXH32_digest (const XXH32_state_t* state)
 {
@@ -613,7 +614,6 @@ XXH_PUBLIC_API XXH32_hash_t XXH32_digest (const XXH32_state_t* state)
     }
 
     h32 += state->total_len_32;
-
     return XXH32_finalize(h32, (const xxh_u8*)state->mem32, state->memsize, XXH_aligned);
 }
 
