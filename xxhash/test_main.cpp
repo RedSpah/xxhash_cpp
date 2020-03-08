@@ -118,7 +118,7 @@ int main(int argc, char** argv)
 
 	constexpr int32_t test_num = 1024;
 
-	std::minstd_rand rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()));
+	std::minstd_rand rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())); 
 	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
 
 
