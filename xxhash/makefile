@@ -7,7 +7,7 @@ WARNINGS = -Wall -Wpedantic -Wextra -Werror
 CC ?= g++
 
 %.o: %.cpp 
-	$(CC) -c -o $@ $< $(CPPVERFLAG) $(EXTRAARGS) $(WARNINGS)
+	$(CC) -c -o $@ $< -I./include $(CPPVERFLAG) $(EXTRAARGS) $(WARNINGS)
 	
 testmake: $(OBJ)
 	$(CC) -o test_scalar_debug $^ -I./include -O0 -g -DXXH_VECTOR=0 $(CPPVERFLAG) $(EXTRAARGS) $(WARNINGS) 
