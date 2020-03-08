@@ -148,6 +148,8 @@ copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
     <PreBuildEvent>
       <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
 
+copy "$(ProjectDir)makefile" "$(ProjectDir).." 
+
 if not exist "$(ProjectDir)..\include\NUL" mkdir "$(ProjectDir)..\include"
 if not exist "$(ProjectDir)..\test\NUL" mkdir "$(ProjectDir)..\test"
 copy "$(ProjectDir)xxhash.hpp" "$(ProjectDir)..\include"
@@ -219,6 +221,8 @@ copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
     <PreBuildEvent>
       <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
 
+copy "$(ProjectDir)makefile" "$(ProjectDir).." 
+
 if not exist "$(ProjectDir)..\include\NUL" mkdir "$(ProjectDir)..\include"
 if not exist "$(ProjectDir)..\test\NUL" mkdir "$(ProjectDir)..\test"
 copy "$(ProjectDir)xxhash.hpp" "$(ProjectDir)..\include"
@@ -247,6 +251,8 @@ copy "$(ProjectDir)catch.hpp" "$(ProjectDir)..\test"</Command>
     <PreBuildEvent>
       <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
 
+copy "$(ProjectDir)makefile" "$(ProjectDir).." 
+
 if not exist "$(ProjectDir)..\include\NUL" mkdir "$(ProjectDir)..\include"
 if not exist "$(ProjectDir)..\test\NUL" mkdir "$(ProjectDir)..\test"
 copy "$(ProjectDir)xxhash.hpp" "$(ProjectDir)..\include"
@@ -258,6 +264,7 @@ copy "$(ProjectDir)catch.hpp" "$(ProjectDir)..\test"</Command>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="catch.hpp" />
+    <ClInclude Include="resource.h" />
     <ClInclude Include="xxh3.h" />
     <ClInclude Include="xxhash.h" />
     <ClInclude Include="xxhash.hpp" />

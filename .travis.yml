@@ -18,7 +18,7 @@ matrix:
           sources: 
             - ubuntu-toolchain-r-test
       compiler: gcc
-      env: "COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -march=native -Wall -Wpedantic -Wextra -Wunknown-pragmas -Wunused-parameter -Wsign-compare -Wattributes \" LIBS=\"\""
+      env: "CC=g++-8"
     - 
       addons: 
         apt: 
@@ -30,34 +30,14 @@ matrix:
             - ubuntu-toolchain-r-test
             - llvm-toolchain-bionic-7
       compiler: clang
-      env: "COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -mavx2 -march=native -Wall -Wpedantic -Wextra -Wmost \" LIBS=\"\""
-    - 
-      addons: 
-        apt: 
-          packages: 
-            - g++-8
-            - gdb
-          sources: 
-            - ubuntu-toolchain-r-test
-      compiler: gcc
-      env: "COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O2 -g -mavx2 -mno-avx256-split-unaligned-load -march=native -Wall -Wpedantic -Wextra -Wunknown-pragmas -Wunused-parameter -Wsign-compare -Wattributes  \" LIBS=\"\""
-    - 
-      addons: 
-        apt: 
-          packages: 
-            - clang-7
-            - g++-8
-            - gdb
-          sources: 
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-bionic-7
-      compiler: clang
-      env: "COMPILER=clang++-7 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -march=native -Wall -Wpedantic -Wextra -Wmost \" LIBS=\"\""
+      env: "CC=clang++-7"
 os: linux
 script: 
-  - "cd ./xxhash"
-#  - "make OUTNAME=test0 CMDARGS=\"-DXXH_VECTOR=0\""
-#  - "make OUTNAME=test1 CMDARGS=\"-DXXH_VECTOR=1\""
-  - "make OUTNAME=test CMDARGS=\"-DXXH_VECTOR=1\""
-  - ./test
+  - make
+  - ./test_scalar_debug
+  - ./test_scalar_release
+  - ./test_sse2_debug
+  - ./test_sse2_release
+  - ./test_avx2_debug
+  - ./test_avx2_release
 sudo: required

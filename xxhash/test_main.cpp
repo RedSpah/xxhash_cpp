@@ -41,9 +41,9 @@ std::string byte_print(T val)
 #define DUMB_REQUIRE(x) {all++; if (x) res++; else std::cout << "Failed: " << TO_STRING(x) << "\n";}
 
 template <typename T>
-bool cmp(T a, T b)
+bool cmp(T a, T b) 
 {
-	return !(std::memcmp(&a, &b, sizeof(T)));
+	return !(std::memcmp(&a, &b, sizeof(T))); 
 }
 
 template <typename T1, typename T2>
