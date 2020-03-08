@@ -1,14 +1,13 @@
-cmake_minimum_required(VERSION 3.12 FATAL_ERROR)
-
-project(xxhash)
-
-option(XXH_BUILD_TESTS "run tests" ON)
-set(CMAKE_CXX_FLAGS "-O3 -march=native -Wall -Wpedantic -Wextra")
+cmake_minimum_required(VERSION 3.8)
+project(xxhash_cpp LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_library(xxhash OBJECT ${CMAKE_CURRENT_SOURCE_DIR}/xxhash/xxhash.cpp)
+option(XXH_BUILD_TESTS "Run compatibility tests between this port and the original." OFF)
+
+include_directories("${PROJECT_SOURCE_DIR}/include")
 
 if(XXH_BUILD_TESTS)
-    add_executable(xxh_tests ${CMAKE_CURRENT_SOURCE_DIR}/xxhash/test_main.cpp)
-    target_link_libraries(xxh_tests xxhash)
+    add_executable(xxh_tests ${CMAKE_CURRENT_SOURCE_DIR}/test/test_main.cpp)
+    target_link_libraries(xxh_tests xxhash_cpp)
 endif()

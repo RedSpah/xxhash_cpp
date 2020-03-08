@@ -147,7 +147,15 @@ copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
     </Link>
     <PreBuildEvent>
       <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
-copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
+
+copy "$(ProjectDir)makefile" "$(ProjectDir).." 
+if not exist "$(ProjectDir)..\include\NUL" mkdir "$(ProjectDir)..\include"
+if not exist "$(ProjectDir)..\test\NUL" mkdir "$(ProjectDir)..\test"
+copy "$(ProjectDir)xxhash.hpp" "$(ProjectDir)..\include"
+copy "$(ProjectDir)test_main.cpp" "$(ProjectDir)..\test"
+copy "$(ProjectDir)xxh3.h" "$(ProjectDir)..\test"
+copy "$(ProjectDir)xxhash.h" "$(ProjectDir)..\test"
+copy "$(ProjectDir)catch.hpp" "$(ProjectDir)..\test"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -211,7 +219,15 @@ copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
     </Link>
     <PreBuildEvent>
       <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
-copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
+
+copy "$(ProjectDir)makefile" "$(ProjectDir).." 
+if not exist "$(ProjectDir)..\include\NUL" mkdir "$(ProjectDir)..\include"
+if not exist "$(ProjectDir)..\test\NUL" mkdir "$(ProjectDir)..\test"
+copy "$(ProjectDir)xxhash.hpp" "$(ProjectDir)..\include"
+copy "$(ProjectDir)test_main.cpp" "$(ProjectDir)..\test"
+copy "$(ProjectDir)xxh3.h" "$(ProjectDir)..\test"
+copy "$(ProjectDir)xxhash.h" "$(ProjectDir)..\test"
+copy "$(ProjectDir)catch.hpp" "$(ProjectDir)..\test"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Rel_x64_noAVX|x64'">
@@ -232,7 +248,15 @@ copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
     </Link>
     <PreBuildEvent>
       <Command>copy "$(ProjectDir).travis.yml" "$(ProjectDir).." 
-copy "$(ProjectDir)makefile" "$(ProjectDir).." </Command>
+
+copy "$(ProjectDir)makefile" "$(ProjectDir).." 
+if not exist "$(ProjectDir)..\include\NUL" mkdir "$(ProjectDir)..\include"
+if not exist "$(ProjectDir)..\test\NUL" mkdir "$(ProjectDir)..\test"
+copy "$(ProjectDir)xxhash.hpp" "$(ProjectDir)..\include"
+copy "$(ProjectDir)test_main.cpp" "$(ProjectDir)..\test"
+copy "$(ProjectDir)xxh3.h" "$(ProjectDir)..\test"
+copy "$(ProjectDir)xxhash.h" "$(ProjectDir)..\test"
+copy "$(ProjectDir)catch.hpp" "$(ProjectDir)..\test"</Command>
     </PreBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
