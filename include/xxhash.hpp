@@ -5,7 +5,6 @@
 #include <type_traits>
 #include <vector>
 #include <string>
-#include <iostream>
 
 /*
 xxHash - Extremely Fast Hash algorithm

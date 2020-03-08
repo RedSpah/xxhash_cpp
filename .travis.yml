@@ -18,7 +18,7 @@ matrix:
           sources: 
             - ubuntu-toolchain-r-test
       compiler: gcc
-      env: "COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -march=native -Wall -Wpedantic -Wextra -Wunknown-pragma -Wunused-parameter -Wsign-compare -Wattributes \" LIBS=\"\""
+      env: "COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O0 -g -mavx2 -march=native -Wall -Wpedantic -Wextra -Wunknown-pragmas -Wunused-parameter -Wsign-compare -Wattributes \" LIBS=\"\""
     - 
       addons: 
         apt: 
@@ -40,7 +40,7 @@ matrix:
           sources: 
             - ubuntu-toolchain-r-test
       compiler: gcc
-      env: "COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O2 -g -mavx2 -mno-avx256-split-unaligned-load -march=native -Wall -Wpedantic -Wextra -Wunknown-pragma -Wunused-parameter -Wsign-compare -Wattributes  \" LIBS=\"\""
+      env: "COMPILER=g++-8 CPPVERFLAG=-std=c++17 EXTRAARGS=\" -O2 -g -mavx2 -mno-avx256-split-unaligned-load -march=native -Wall -Wpedantic -Wextra -Wunknown-pragmas -Wunused-parameter -Wsign-compare -Wattributes  \" LIBS=\"\""
     - 
       addons: 
         apt: 
