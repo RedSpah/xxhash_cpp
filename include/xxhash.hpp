@@ -940,7 +940,7 @@ namespace xxh
 
 		constexpr vec_mode vector_mode = static_cast<vec_mode>(intrin::vector_mode);
 		constexpr uint64_t acc_align = intrin::acc_align;
-		constexpr uint64_t vector_bit_width = (acc_align * 8);
+		constexpr std::array<uint64_t, 3> vector_bit_width { 64, 128, 256 };
 
 		
 		/* *************************************
@@ -982,7 +982,7 @@ namespace xxh
 		template <vec_mode V>
 		XXH_FORCE_INLINE void accumulate_512(void* XXH_RESTRICT acc, const void* XXH_RESTRICT input, const void* XXH_RESTRICT secret, acc_width width)
 		{
-			constexpr uint64_t bits = vector_bit_width;
+			constexpr uint64_t bits = vector_bit_width[static_cast<uint8_t>(V)];
 
 			using vec_t = vec_t<bits>;
 			
@@ -997,7 +997,7 @@ namespace xxh
 				vec_t const data_key = xorv<bits>(data_vec, key_vec);
 				vec_t product = set1<bits>(0);
 
-				if constexpr (bits > 64)
+				if constexpr (V != vec_mode::scalar)
 				{
 					vec_t const data_key_lo = shuffle<bits, 0, 3, 0, 1>(data_key);
 
@@ -1017,7 +1017,7 @@ namespace xxh
 						xacc[i] = add<bits>(sum, product);
 					}
 				}
-				else 
+				else
 				{
 					product = mul32to64(data_key & 0xFFFFFFFF, data_key >> 32);
 
@@ -1038,7 +1038,7 @@ namespace xxh
 		template <vec_mode V>
 		XXH_FORCE_INLINE void scramble_acc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
 		{
-			constexpr uint64_t bits = vector_bit_width;
+			constexpr uint64_t bits = vector_bit_width[static_cast<uint8_t>(V)];;
 
 			using vec_t = vec_t<bits>;
 
@@ -1053,14 +1053,14 @@ namespace xxh
 				vec_t const key_vec = loadu<bits>(xsecret + i);
 				vec_t const data_key = xorv<bits>(data_vec, key_vec);
 				
-				if constexpr (bits > 64)	
+				if constexpr (V != vec_mode::scalar)
 				{
 					vec_t const prime32 = set1<bits>(PRIME<32>(1));
 					vec_t const data_key_hi = shuffle<bits, 0, 3, 0, 1>(data_key);
 					vec_t const prod_lo = mul<bits>(data_key, prime32);
 					vec_t const prod_hi = mul<bits>(data_key_hi, prime32);
 
-					xacc[i] = add<bits>(prod_lo, vec_ops::slli<bits>(prod_hi, 32));
+					xacc[i] = add<bits>(prod_lo, vec_ops::slli<bits>(prod_hi, 32)); 
 				}
 				else 
 				{
