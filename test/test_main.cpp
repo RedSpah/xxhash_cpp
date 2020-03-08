@@ -519,7 +519,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		XXH64_canonicalFromHash(&canonical3_64_c_secmin, XXH3_64bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
 		XXH128_canonicalFromHash(&canonical3_128_c_secmin, XXH3_128bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
 
-		//std::cout << "Run: " << i << "\n";
+		//std::cout << "Run: " << i << "\n"; 
 
 		REQUIRE(XXH32(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<32>(input_buffer, seed));
 		REQUIRE(XXH64(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<64>(input_buffer, seed));
@@ -583,65 +583,6 @@ TEST_CASE("Printing results for inter-platform comparison", "[platform]")
 	uint32_t zero_data[] = { 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000 };
 	uint32_t one_data[] = { 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF };
 	uint32_t alternating_data2[] = { 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA, 0xAAAAAAAA };
-
-	constexpr uint32_t zero = 0x00000000;
-	constexpr uint64_t zero64 = 0x0000000000000000;
-
-	constexpr uint32_t one = 0x00000001;
-	constexpr uint64_t one64 = 0x0000000000000001;
-
-	constexpr uint32_t last_byte = 0x000000FF;
-	constexpr uint64_t last_byte64 = 0x00000000000000FF;
-
-	constexpr uint32_t first_byte = 0xFF000000;
-	constexpr uint64_t first_byte64 = 0xFF00000000000000;
-
-	constexpr uint32_t cascade = 0x01234567;
-	constexpr uint64_t cascade64 = 0x0123456789ABCDEF;
-
-	RAW_PRINT(xxh::mem_ops::readLE<32>(&zero));
-	RAW_PRINT(xxh::mem_ops::readLE<64>(&zero64));
-
-	RAW_PRINT(xxh::mem_ops::readLE<32>(&one));
-	RAW_PRINT(xxh::mem_ops::readLE<64>(&one64));
-
-	RAW_PRINT(xxh::mem_ops::readLE<32>(&last_byte));
-	RAW_PRINT(xxh::mem_ops::readLE<64>(&last_byte64));
-
-	RAW_PRINT(xxh::mem_ops::readLE<32>(&first_byte));
-	RAW_PRINT(xxh::mem_ops::readLE<64>(&first_byte64));
-
-	RAW_PRINT(xxh::bit_ops::rotl<32>(one, 4));
-	RAW_PRINT(xxh::bit_ops::rotl<32>(last_byte, 4));
-	RAW_PRINT(xxh::bit_ops::rotl<32>(first_byte, 4));
-	RAW_PRINT(xxh::bit_ops::rotl<32>(cascade, 4));
-
-	RAW_PRINT(xxh::bit_ops::rotl<32>(one, 16));
-	RAW_PRINT(xxh::bit_ops::rotl<32>(last_byte, 16));
-	RAW_PRINT(xxh::bit_ops::rotl<32>(first_byte, 16));
-	RAW_PRINT(xxh::bit_ops::rotl<32>(cascade, 16));
-
-	RAW_PRINT(xxh::bit_ops::rotl<64>(one64, 4));
-	RAW_PRINT(xxh::bit_ops::rotl<64>(last_byte64, 4));
-	RAW_PRINT(xxh::bit_ops::rotl<64>(first_byte64, 4));
-	RAW_PRINT(xxh::bit_ops::rotl<64>(cascade64, 4));
-
-	RAW_PRINT(xxh::bit_ops::rotl<64>(one64, 16));
-	RAW_PRINT(xxh::bit_ops::rotl<64>(last_byte64, 16));
-	RAW_PRINT(xxh::bit_ops::rotl<64>(first_byte64, 16));
-	RAW_PRINT(xxh::bit_ops::rotl<64>(cascade64, 16));
-
-	RAW_PRINT(xxh::bit_ops::swap<32>(one));
-	RAW_PRINT(xxh::bit_ops::swap<64>(one64));
-
-	RAW_PRINT(xxh::bit_ops::swap<32>(last_byte));
-	RAW_PRINT(xxh::bit_ops::swap<64>(last_byte64));
-
-	RAW_PRINT(xxh::bit_ops::swap<32>(first_byte));
-	RAW_PRINT(xxh::bit_ops::swap<64>(first_byte64));
-
-	RAW_PRINT(xxh::bit_ops::swap<32>(cascade));
-	RAW_PRINT(xxh::bit_ops::swap<64>(cascade64));
 
 	RAW_PRINT(xxh::xxhash<32>(alternating_data, 32, 0));
 	RAW_PRINT(xxh::xxhash<64>(alternating_data, 32, 0));
