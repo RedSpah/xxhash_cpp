@@ -1,5 +1,5 @@
 # xxhash_cpp
-Port of the xxHash library to C++14.
+Port of the xxHash library to C++17. Includes support for the experimental xxh3 algorithm.
 
 [![Build Status](https://travis-ci.org/RedSpah/xxhash_cpp.svg?branch=master)](https://travis-ci.org/RedSpah/xxhash_cpp)
 
@@ -7,10 +7,9 @@ Compatibility
 ----
 | Compiler             | Min. Version        | 
 |----------------------|:-------------------:|
-| MSVC (Visual Studio) | 19.0 (VS 2017)      | 
-| clang                | 3.4                 | 
-| gcc                  | 5                   |
-| Intel C++            | 17.0                |
+| MSVC (Visual Studio) | 19.1 (VS 2017.3 P2) | 
+| clang                | 3.9                 | 
+| gcc                  | 7                   |
 
 Example Usage
 ----
@@ -33,7 +32,6 @@ The template argument specifies whether the algorithm will use the 32 or 64 bit 
 
 `xxh::xxhash` and `xxh::hash_state_t::update` provide several convenient overloads, all accepting optional `seed` and `endianness` arguments:
 * C-style `const void*` + `size_t` pair
-* `const T*` + `size_t` pair, for passing C arrays
 * `const std::vector<T>&`
 * `const std::basic_string<T>&`
 * A pair of templated iterators

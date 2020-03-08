@@ -1677,6 +1677,7 @@ namespace xxh
 	{   
 		constexpr static int internal_buffer_size = 256;
 		constexpr static int internal_buffer_stripes = (internal_buffer_size / detail3::stripe_len);
+		constexpr static detail3::acc_width accWidth = (N == 64) ? detail3::acc_width::acc_64bits : detail3::acc_width::acc_128bits;
 	
 		alignas(64) hash_t<64> acc[8];
 		alignas(64) uint8_t customSecret[detail3::secret_default_size];  /* used to store a custom secret generated from the seed. Makes state larger. Design might change */
@@ -1710,9 +1711,7 @@ namespace xxh
 
 		error_code update_impl(const void* input_, size_t len)
 		{
-			detail3::acc_width accWidth = (N == 64) ? detail3::acc_width::acc_64bits : detail3::acc_width::acc_128bits;
-
-			if (input_ == NULL)
+			if (input_ == nullptr)
 			{
 				return error_code::error;
 			}
@@ -1876,10 +1875,9 @@ namespace xxh
 		}
 
 		hash_t<N> digest()
-		{
-			constexpr detail3::acc_width accWidth = (N == 64) ? detail3::acc_width::acc_64bits : detail3::acc_width::acc_128bits;
-
-			if (totalLen > detail3::midsize_max) {
+		{	
+			if (totalLen > detail3::midsize_max) 
+			{
 				alignas(detail3::acc_align) hash64_t acc[detail3::acc_nb];
 				
 				digest_long(acc, accWidth);
@@ -1914,7 +1912,7 @@ namespace xxh
 	using hash3_state128_t = hash3_state_t<128>;
 
 	/* *******************************************************************
-	*  Canonical
+	*  Canonical representation
 	*********************************************************************/
 
 	template <size_t N>
