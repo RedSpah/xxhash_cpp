@@ -261,11 +261,9 @@ __pycache__/
 *.pyc
 
 # Test files
-*/xxhash_c_version.h
-*/compatibility_test.cpp
-/xxhash/test_main.cpp
 *.o 
 *.exe 
 *.vcxproj
 *.vcxproj.filters
 *.cmake
+*.sln

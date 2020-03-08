@@ -1,3 +1,5 @@
+### THIS IS A TRAVIS MAKEFILE DON'T USE IT NORMALLY
+
 OBJ = test_main.o
 
 %.o: %.cpp 
