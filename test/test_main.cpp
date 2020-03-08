@@ -38,7 +38,7 @@ std::string byte_print(T val)
 #define TO_STRING(s) STRINGIFY(s)
 #define RAW_PRINT(...) std::cout << std::left << std::setw(50) << TO_STRING(__VA_ARGS__) " == " << byte_print((__VA_ARGS__)) << "\n";
 
-#define DUMB_REQUIRE(x) {all++; if (x) res++; else std::cout << "Failed: " << TO_STRING(s) << "\n";}
+#define DUMB_REQUIRE(x) {all++; if (x) res++; else std::cout << "Failed: " << TO_STRING(x) << "\n";}
 
 template <typename T>
 bool cmp(T a, T b)
@@ -519,6 +519,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		XXH64_canonicalFromHash(&canonical3_64_c_secmin, XXH3_64bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
 		XXH128_canonicalFromHash(&canonical3_128_c_secmin, XXH3_128bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
 
+		//std::cout << "Run: " << i << "\n";
 
 		REQUIRE(XXH32(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<32>(input_buffer, seed));
 		REQUIRE(XXH64(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<64>(input_buffer, seed));
@@ -598,17 +599,17 @@ TEST_CASE("Printing results for inter-platform comparison", "[platform]")
 	constexpr uint32_t cascade = 0x01234567;
 	constexpr uint64_t cascade64 = 0x0123456789ABCDEF;
 
-	RAW_PRINT(xxh::mem_ops::read32(&zero));
-	RAW_PRINT(xxh::mem_ops::read64(&zero64));
+	RAW_PRINT(xxh::mem_ops::readLE<32>(&zero));
+	RAW_PRINT(xxh::mem_ops::readLE<64>(&zero64));
 
-	RAW_PRINT(xxh::mem_ops::read32(&one));
-	RAW_PRINT(xxh::mem_ops::read64(&one64));
+	RAW_PRINT(xxh::mem_ops::readLE<32>(&one));
+	RAW_PRINT(xxh::mem_ops::readLE<64>(&one64));
 
-	RAW_PRINT(xxh::mem_ops::read32(&last_byte));
-	RAW_PRINT(xxh::mem_ops::read64(&last_byte64));
+	RAW_PRINT(xxh::mem_ops::readLE<32>(&last_byte));
+	RAW_PRINT(xxh::mem_ops::readLE<64>(&last_byte64));
 
-	RAW_PRINT(xxh::mem_ops::read32(&first_byte));
-	RAW_PRINT(xxh::mem_ops::read64(&first_byte64));
+	RAW_PRINT(xxh::mem_ops::readLE<32>(&first_byte));
+	RAW_PRINT(xxh::mem_ops::readLE<64>(&first_byte64));
 
 	RAW_PRINT(xxh::bit_ops::rotl<32>(one, 4));
 	RAW_PRINT(xxh::bit_ops::rotl<32>(last_byte, 4));
