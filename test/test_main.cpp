@@ -10,7 +10,7 @@
 
 #define XXH_STATIC_LINKING_ONLY
 
-#define XXH_VECTOR 1
+//#define XXH_VECTOR 1
 #define XXH_INLINE_ALL
 #include "xxh3.h"	
 #include "xxhash.hpp"
@@ -109,6 +109,10 @@ bool operator == (XXH128_hash_t h1, xxh::hash128_t h2)
 int main(int argc, char** argv)
 {
 	// Dumb but it works: have the tests run beforehand without Catch so that gdb can catch segfaults, and then repeat afterwards with catch for pretty results
+
+
+	std::cout << "xxhash_cpp compatibility testing, vectorization setting: " << static_cast<uint8_t>(xxh::detail3::vector_mode) << std::endl << std::endl; 
+
 
 	int all = 0, res = 0;
 
