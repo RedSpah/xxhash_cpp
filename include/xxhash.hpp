@@ -9,8 +9,8 @@
 /*
 xxHash - Extremely Fast Hash algorithm
 Header File
-Copyright (C) 2012-Present, Yann Collet.
-Copyright (C) 2017-Present, Red Gavin.
+Copyright (C) 2012-2020, Yann Collet.
+Copyright (C) 2017-2020, Red Gavin.
 All rights reserved.
 
 BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)

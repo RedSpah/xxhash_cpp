@@ -11,10 +11,18 @@ include(GNUInstallDirs)
 add_library(${PROJECT_NAME} INTERFACE)
 
 target_include_directories(${PROJECT_NAME} INTERFACE
-	$<BUILD_INTERFACE:${${PROJECT_NAME}_SOURCE_DIR}/include>  
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>  
 	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
+
+if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
+  include(CTest)
+endif()
+
+if(BUILD_TESTING)
+  add_subdirectory(test)
+endif()
 
 install(TARGETS ${PROJECT_NAME} 
 	EXPORT ${PROJECT_NAME}_Targets 
@@ -28,8 +36,14 @@ write_basic_package_version_file("${PROJECT_NAME}ConfigVersion.cmake"
 	VERSION ${PROJECT_VERSION} 
 	COMPATIBILITY ExactVersion)
 
+file(WRITE ${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in
+  "@PACKAGE_INIT@\n"
+  "include(\"\${CMAKE_CURRENT_LIST_DIR}/@PROJECT_NAME@Targets.cmake\")\n"
+  "check_required_components(\"@PROJECT_NAME@\")\n"
+)
+
 configure_package_config_file(
-	"${PROJECT_SOURCE_DIR}/cmake/${PROJECT_NAME}Config.cmake.in" 
+	"${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake.in" 
 	"${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" 
 	INSTALL_DESTINATION 
 	${CMAKE_INSTALL_DATAROOTDIR}/${PROJECT_NAME}/cmake)
