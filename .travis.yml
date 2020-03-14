@@ -4,8 +4,6 @@ after_failure:
 before_script: 
   - "ulimit -c unlimited -S"
 dist: bionic
-install: 
-  - "sudo apt-get install -y gdb"
 language: cpp
 matrix: 
   include: 
@@ -17,8 +15,7 @@ matrix:
             - gdb
           sources: 
             - ubuntu-toolchain-r-test
-      compiler: gcc
-      env: "CC=g++-8"
+      compiler: g++-8
     - 
       addons: 
         apt: 
@@ -29,15 +26,13 @@ matrix:
           sources: 
             - ubuntu-toolchain-r-test
             - llvm-toolchain-bionic-7
-      compiler: clang
-      env: "CC=clang++-7"
+      compiler: clang++-7
 os: linux
 script: 
-  - make
-  - ./test_scalar_debug
-  - ./test_scalar_release
-  - ./test_sse2_debug
-  - ./test_sse2_release
-  - ./test_avx2_debug
-  - ./test_avx2_release
-sudo: required
+  - mkdir build && cd build
+  - |
+    for buildType in Debug Release; do
+      cmake -DCMAKE_BUILD_TYPE=$buildType -DXXH_CPP_USE_AVX2=ON ..
+      cmake --build . --config $buildType
+      ctest --output-on-failure -C $buildType
+    done
