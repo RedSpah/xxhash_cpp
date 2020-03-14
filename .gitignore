@@ -267,6 +267,13 @@ __pycache__/
 *.vcxproj
 *.vcxproj.filters
 *.cmake
+*.cmake.in
 *.sln
-./xxhash/*
-./build/*
+/xxhash
+/xxhash_dev
+/build
+/xxhash_dev
+*.tcl
+CMakeCache.txt
+/test/CMakeFiles
+/CMakeFiles
