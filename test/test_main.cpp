@@ -525,8 +525,8 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		//std::cout << "Run: " << i << "\n"; 
 
-		REQUIRE(XXH32(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<32>(input_buffer, seed));
-		REQUIRE(XXH64(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<64>(input_buffer, seed));
+		REQUIRE(XXH32(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<32>(input_buffer, seed)+1);
+		REQUIRE(XXH64(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<64>(input_buffer, seed)+1);
 
 		REQUIRE(XXH3_64bits_withSeed(input_buffer.data(), test_buf_size, seed) == xxh::xxhash3<64>(input_buffer, seed));
 		REQUIRE(XXH3_128bits_withSeed(input_buffer.data(), test_buf_size, seed) == xxh::xxhash3<128>(input_buffer, seed));
