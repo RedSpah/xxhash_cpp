@@ -150,7 +150,7 @@ namespace xxh
 
 #if XXH_VECTOR == 2		/* AVX2 for Haswell and Bulldozer */
 		constexpr int acc_align = 32;
-		using avx2_underying = __m256i;
+		using avx2_underlying = __m256i;
 		using sse2_underlying = __m128i;
 #elif XXH_VECTOR == 1	/* SSE2 for Pentium 4 and all x86_64 */
 		using avx2_underlying = void; //std::array<__m128i, 2>;
