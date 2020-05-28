@@ -64,16 +64,12 @@ namespace xxh
 
 
 	/* *************************************
-	*  Basic Types
+	*  Basic Types - Predefining uint128_t for intrin
 	***************************************/
 
 	namespace typedefs
 	{
-		/* *************************************
-		*  Basic Types - Detail
-		***************************************/
-
-		struct alignas(16) uint128_t 
+		struct alignas(16) uint128_t
 		{
 			uint64_t low64 = 0;
 			uint64_t high64 = 0;
@@ -83,27 +79,27 @@ namespace xxh
 				return (low64 == other.low64 && high64 == other.high64);
 			}
 
-			bool operator>(const uint128_t& other)
+			bool operator>(const uint128_t & other)
 			{
 				return (high64 > other.high64 || low64 > other.low64);
 			}
 
-			bool operator>=(const uint128_t& other)
+			bool operator>=(const uint128_t & other)
 			{
 				return (*this > other || *this == other);
 			}
 
-			bool operator<(const uint128_t& other)
+			bool operator<(const uint128_t & other)
 			{
 				return !(*this >= other);
 			}
 
-			bool operator<=(const uint128_t& other)
+			bool operator<=(const uint128_t & other)
 			{
 				return !(*this > other);
 			}
 
-			bool operator!=(const uint128_t& other)
+			bool operator!=(const uint128_t & other)
 			{
 				return !(*this == other);
 			}
@@ -113,101 +109,8 @@ namespace xxh
 			uint128_t() {}
 		};
 
-		template <size_t N>
-		struct hash_type
-		{
-			using type = void;
-		};
-
-		template <>
-		struct hash_type<32>
-		{
-			using type = uint32_t;
-		};
-
-		template <>
-		struct hash_type<64>
-		{
-			using type = uint64_t;
-		};
-
-		template <>
-		struct hash_type<128>
-		{
-			using type = uint128_t;
-		};
-
-
-		template <size_t N>
-		struct vec_type
-		{
-			using type = void;
-		};
-
-		template <>
-		struct vec_type<64>
-		{
-			using type = uint64_t;
-		};
-
-		template <>
-		struct vec_type<128>
-		{
-			using type = __m128i;
-		};
-
-		template <>
-		struct vec_type<256>
-		{
-			using type = __m256i;
-		};
-
-		/* Rationale
-		* On the surface level uint_type appears to be pointless,
-		* as it is just a copy of hash_type. They do use the same types,
-		* that is true, but the reasoning for the difference is aimed at humans,
-		* not the compiler, as a difference between values that are 'just' numbers,
-		* and those that represent actual hash values.
-		*/
-		template <size_t N>
-		struct uint_type
-		{
-			using type = void;
-		};
-
-		template <>
-		struct uint_type<32>
-		{
-			using type = uint32_t;
-		};
-
-		template <>
-		struct uint_type<64>
-		{
-			using type = uint64_t;
-		};
-
-		template <>
-		struct uint_type<128>
-		{
-			using type = uint128_t;
-		};
 	}
 
-	template <size_t N>
-	using hash_t = typename typedefs::hash_type<N>::type;
-	using hash32_t = hash_t<32>;
-	using hash64_t = hash_t<64>;
-	using hash128_t = hash_t<128>;
-
-	template <size_t N>
-	using vec_t = typename typedefs::vec_type<N>::type;
-	using vec64_t = vec_t<64>;
-	using vec128_t = vec_t<128>;
-	using vec256_t = vec_t<256>;
-
-	template <size_t N>
-	using uint_t = typename typedefs::uint_type<N>::type;
 	using uint128_t = typedefs::uint128_t;
 
 
@@ -247,9 +150,15 @@ namespace xxh
 
 #if XXH_VECTOR == 2		/* AVX2 for Haswell and Bulldozer */
 		constexpr int acc_align = 32;
+		using avx2_underying = __m256i;
+		using sse2_underlying = __m128i;
 #elif XXH_VECTOR == 1	/* SSE2 for Pentium 4 and all x86_64 */
+		using avx2_underlying = void; //std::array<__m128i, 2>;
+		using sse2_underlying = __m128i;
 		constexpr int acc_align = 16;
 #else					/* Portable scalar version */
+		using avx2_underlying = void; //std::array<uint64_t, 4>;
+		using sse2_underlying = void; //std::array<uint64_t, 2>;
 		constexpr int acc_align = 8;
 #endif
 
@@ -395,6 +304,114 @@ namespace xxh
 			}
 		}
 	}
+
+
+	/* *************************************
+	*  Basic Types - Everything else
+	***************************************/
+
+	namespace typedefs
+	{
+		/* *************************************
+		*  Basic Types - Detail
+		***************************************/
+
+		template <size_t N>
+		struct hash_type
+		{
+			using type = void;
+		};
+
+		template <>
+		struct hash_type<32>
+		{
+			using type = uint32_t;
+		};
+
+		template <>
+		struct hash_type<64>
+		{
+			using type = uint64_t;
+		};
+
+		template <>
+		struct hash_type<128>
+		{
+			using type = uint128_t;
+		};
+
+
+		template <size_t N>
+		struct vec_type
+		{
+			using type = void;
+		};
+
+		template <>
+		struct vec_type<64>
+		{
+			using type = uint64_t;
+		};
+
+		template <>
+		struct vec_type<128>
+		{
+			using type = intrin::sse2_underlying;
+		};
+
+		template <>
+		struct vec_type<256>
+		{
+			using type = intrin::avx2_underlying;
+		};
+
+		/* Rationale
+		* On the surface level uint_type appears to be pointless,
+		* as it is just a copy of hash_type. They do use the same types,
+		* that is true, but the reasoning for the difference is aimed at humans,
+		* not the compiler, as a difference between values that are 'just' numbers,
+		* and those that represent actual hash values.
+		*/
+		template <size_t N>
+		struct uint_type
+		{
+			using type = void;
+		};
+
+		template <>
+		struct uint_type<32>
+		{
+			using type = uint32_t;
+		};
+
+		template <>
+		struct uint_type<64>
+		{
+			using type = uint64_t;
+		};
+
+		template <>
+		struct uint_type<128>
+		{
+			using type = uint128_t;
+		};
+	}
+
+	template <size_t N>
+	using hash_t = typename typedefs::hash_type<N>::type;
+	using hash32_t = hash_t<32>;
+	using hash64_t = hash_t<64>;
+	using hash128_t = hash_t<128>;
+
+	template <size_t N>
+	using vec_t = typename typedefs::vec_type<N>::type;
+	using vec64_t = vec_t<64>;
+	using vec128_t = vec_t<128>;
+	using vec256_t = vec_t<256>;
+
+	template <size_t N>
+	using uint_t = typename typedefs::uint_type<N>::type;
+	
 
 
 	/* *************************************
