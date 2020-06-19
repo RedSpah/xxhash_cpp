@@ -193,7 +193,7 @@ namespace xxh
 		*/
 #if defined(XXH_NO_PREFETCH)
 		XXH_FORCE_INLINE void prefetch(const void* ptr) {}
-#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_I86))  
+#elif defined(_MSC_VER) && (defined(_M_X64) || defined(_M_IX86))  
 		XXH_FORCE_INLINE void prefetch(const void* ptr) { _mm_prefetch((const char*)(ptr), _MM_HINT_T0); }
 #elif defined(__GNUC__) 
 		XXH_FORCE_INLINE void prefetch(const void* ptr) { __builtin_prefetch((ptr), 0, 3); }
