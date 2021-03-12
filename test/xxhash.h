@@ -158,7 +158,6 @@ extern "C" {
 #endif /* XXH_INLINE_ALL || XXH_PRIVATE_API */
 
 
-
 /* ****************************************************************
  *  Stable API
  *****************************************************************/
@@ -215,7 +214,6 @@ extern "C" {
 #  define XXH64_hashFromCanonical XXH_NAME2(XXH_NAMESPACE, XXH64_hashFromCanonical)
 #endif
 
-
 /* *************************************
 *  Version
 ***************************************/
@@ -225,13 +223,12 @@ extern "C" {
 #define XXH_VERSION_NUMBER  (XXH_VERSION_MAJOR *100*100 + XXH_VERSION_MINOR *100 + XXH_VERSION_RELEASE)
 XXH_PUBLIC_API unsigned XXH_versionNumber (void);
 
-
 /* ****************************
 *  Definitions
 ******************************/
 #include <stddef.h>   /* size_t */
+#include <stdint.h> /*ToDo: evaluate advantages of adding and utilizing <cstdint> in C++ version */
 typedef enum { XXH_OK=0, XXH_ERROR } XXH_errorcode;
-
 
 /*-**********************************************************************
 *  32-bit hash
@@ -302,7 +299,7 @@ XXH_PUBLIC_API XXH32_hash_t  XXH32_digest (const XXH32_state_t* statePtr);
 /*
  * The default return values from XXH functions are unsigned 32 and 64 bit
  * integers.
- * This the simplest and fastest format for further post-processing.
+ * This is the simplest and fastest format for further post-processing.
  *
  * However, this leaves open the question of what is the order on the byte level,
  * since little and big endian conventions will store the same number differently.
@@ -362,11 +359,9 @@ typedef struct { unsigned char digest[8]; } XXH64_canonical_t;
 XXH_PUBLIC_API void XXH64_canonicalFromHash(XXH64_canonical_t* dst, XXH64_hash_t hash);
 XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src);
 
-
 #endif  /* XXH_NO_LONG_LONG */
 
 #endif /* XXHASH_H_5627135585666179 */
-
 
 
 #if defined(XXH_STATIC_LINKING_ONLY) && !defined(XXHASH_H_STATIC_13879238742)
@@ -378,7 +373,6 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src
  * These declarations should only be used with static linking.
  * Never use them in association with dynamic linking!
  ***************************************************************************** */
-
 /*
  * These definitions are only present to allow static allocation of an XXH
  * state, for example, on the stack or in a struct.
@@ -397,7 +391,6 @@ struct XXH32_state_s {
    XXH32_hash_t reserved;   /* never read nor write, might be removed in a future version */
 };   /* typedef'd to XXH32_state_t */
 
-
 #ifndef XXH_NO_LONG_LONG  /* defined when there is no 64-bit support */
 
 struct XXH64_state_s {
@@ -411,7 +404,6 @@ struct XXH64_state_s {
    XXH32_hash_t reserved32;  /* required for padding anyway */
    XXH64_hash_t reserved64;  /* never read nor write, might be removed in a future version */
 };   /* typedef'd to XXH64_state_t */
-
 
 /*-**********************************************************************
 *  XXH3
@@ -451,7 +443,7 @@ struct XXH64_state_s {
  *
  * It's also generally simpler to manipulate a scalar return type than a struct.
  *
- * The 128-bit version adds additional strength, but it is slightly slower.
+ * The 128-bit version adds additional strength, but it's slightly slower.
  *
  * The XXH3 algorithm is still in development.
  * The results it produces may still change in future versions.
@@ -504,11 +496,10 @@ XXH_PUBLIC_API XXH64_hash_t XXH3_64bits_withSecret(const void* data, size_t len,
  * XXH3_64bits_withSeed():
  * This variant generates a custom secret on the fly based on the default
  * secret, altered using the `seed` value.
- * While this operation is decently fast, note that it's not completely free.
+ * While this operation is decently fast, note that it isn't completely free.
  * Note: seed==0 produces the same results as XXH3_64bits().
  */
 XXH_PUBLIC_API XXH64_hash_t XXH3_64bits_withSeed(const void* data, size_t len, XXH64_hash_t seed);
-
 
 /* streaming 64-bit */
 
@@ -566,7 +557,6 @@ XXH_PUBLIC_API XXH3_state_t* XXH3_createState(void);
 XXH_PUBLIC_API XXH_errorcode XXH3_freeState(XXH3_state_t* statePtr);
 XXH_PUBLIC_API void XXH3_copyState(XXH3_state_t* dst_state, const XXH3_state_t* src_state);
 
-
 /*
  * XXH3_64bits_reset():
  * Initialize with the default parameters.
@@ -589,7 +579,6 @@ XXH_PUBLIC_API XXH_errorcode XXH3_64bits_reset_withSecret(XXH3_state_t* statePtr
 
 XXH_PUBLIC_API XXH_errorcode XXH3_64bits_update (XXH3_state_t* statePtr, const void* input, size_t length);
 XXH_PUBLIC_API XXH64_hash_t  XXH3_64bits_digest (const XXH3_state_t* statePtr);
-
 
 /* 128-bit */
 
@@ -648,12 +637,10 @@ XXH_PUBLIC_API int XXH128_isEqual(XXH128_hash_t h1, XXH128_hash_t h2);
  */
 XXH_PUBLIC_API int XXH128_cmp(const void* h128_1, const void* h128_2);
 
-
 /*******   Canonical representation   *******/
 typedef struct { unsigned char digest[16]; } XXH128_canonical_t;
 XXH_PUBLIC_API void XXH128_canonicalFromHash(XXH128_canonical_t* dst, XXH128_hash_t hash);
 XXH_PUBLIC_API XXH128_hash_t XXH128_hashFromCanonical(const XXH128_canonical_t* src);
-
 
 #endif  /* XXH_NO_LONG_LONG */
 
@@ -663,11 +650,8 @@ XXH_PUBLIC_API XXH128_hash_t XXH128_hashFromCanonical(const XXH128_canonical_t* 
 
 #endif  /* defined(XXH_STATIC_LINKING_ONLY) && !defined(XXHASH_H_STATIC_13879238742) */
 
-
 /* ======================================================================== */
 /* ======================================================================== */
-/* ======================================================================== */
-
 
 /*-**********************************************************************
  * xxHash implementation
@@ -678,7 +662,7 @@ XXH_PUBLIC_API XXH128_hash_t XXH128_hashFromCanonical(const XXH128_canonical_t* 
  * compiler, usually within the header.
  *
  * As a workaround, xxhash.c used to be included within xxhash.h. This caused
- * some issues with some build systems, especially ones which treat .c files
+ * some issues with some build systems, especially those which treat .c files
  * as source files.
  *
  * Therefore, the implementation is now directly integrated within xxhash.h.
@@ -700,7 +684,7 @@ XXH_PUBLIC_API XXH128_hash_t XXH128_hashFromCanonical(const XXH128_canonical_t* 
  * Unfortunately, on some target/compiler combinations, the generated assembly
  * is sub-optimal.
  *
- * The below switch allow to select a different access method for improved
+ * The below switch allows to select a different access method for improved
  * performance.
  * Method 0 (default):
  *     Use `memcpy()`. Safe and portable.
@@ -804,7 +788,6 @@ XXH_PUBLIC_API XXH128_hash_t XXH128_hashFromCanonical(const XXH128_canonical_t* 
 #  endif
 #endif
 
-
 /* *************************************
 *  Includes & Memory related functions
 ***************************************/
@@ -823,7 +806,6 @@ static void* XXH_memcpy(void* dest, const void* src, size_t size)
 }
 
 #include <limits.h>   /* ULLONG_MAX */
-
 
 /* *************************************
 *  Compiler Specific Options
@@ -855,7 +837,6 @@ static void* XXH_memcpy(void* dest, const void* src, size_t size)
 #endif
 
 
-
 /* *************************************
 *  Debug
 ***************************************/
@@ -877,7 +858,6 @@ static void* XXH_memcpy(void* dest, const void* src, size_t size)
 /* note: use after variable declarations */
 #define XXH_STATIC_ASSERT(c)  { enum { XXH_sa = 1/(int)(!!(c)) }; }
 
-
 /* *************************************
 *  Basic Types
 ***************************************/
@@ -890,7 +870,6 @@ static void* XXH_memcpy(void* dest, const void* src, size_t size)
   typedef unsigned char      xxh_u8;
 #endif
 typedef XXH32_hash_t xxh_u32;
-
 
 /* ***   Memory access   *** */
 
@@ -933,16 +912,15 @@ static xxh_u32 XXH_read32(const void* memPtr)
 
 #endif   /* XXH_FORCE_DIRECT_MEMORY_ACCESS */
 
-
 /* ***   Endianess   *** */
 typedef enum { XXH_bigEndian=0, XXH_littleEndian=1 } XXH_endianess;
 
 /*!
  * XXH_CPU_LITTLE_ENDIAN:
- * Defined to 1 if the target is little endian, or 0 if it is big endian.
+ * Defined to 1 if the target is little endian, or 0 if it's big endian.
  * It can be defined externally, for example on the compiler command line.
  *
- * If it is not defined, a runtime check (which is usually constant folded)
+ * If it's not defined, a runtime check (which is usually constant folded)
  * is used instead.
  */
 #ifndef XXH_CPU_LITTLE_ENDIAN
@@ -962,7 +940,7 @@ static int XXH_isLittleEndian(void)
 {
     /*
      * Nonstandard, but well-defined behavior in practice.
-     * Don't use static: it is detrimental to performance.
+     * Don't use static: it's detrimental to performance.
      */
     const union { xxh_u32 u; xxh_u8 c[4]; } one = { 1 };
     return one.c[0];
@@ -970,8 +948,6 @@ static int XXH_isLittleEndian(void)
 #   define XXH_CPU_LITTLE_ENDIAN   XXH_isLittleEndian()
 #  endif
 #endif
-
-
 
 
 /* ****************************************
@@ -1009,7 +985,6 @@ static xxh_u32 XXH_swap32 (xxh_u32 x)
             ((x >> 24) & 0x000000ff );
 }
 #endif
-
 
 /* ***************************
 *  Memory reads
@@ -1063,12 +1038,10 @@ XXH_readLE32_align(const void* ptr, XXH_alignment align)
     }
 }
 
-
 /* *************************************
 *  Misc
 ***************************************/
 XXH_PUBLIC_API unsigned XXH_versionNumber (void) { return XXH_VERSION_NUMBER; }
-
 
 /* *******************************************************************
 *  32-bit hash functions
@@ -1089,7 +1062,7 @@ static xxh_u32 XXH32_round(xxh_u32 acc, xxh_u32 input)
      * UGLY HACK:
      * This inline assembly hack forces acc into a normal register. This is the
      * only thing that prevents GCC and Clang from autovectorizing the XXH32
-     * loop (pragmas and attributes don't work for some resason) without globally
+     * loop (pragmas and attributes don't work for some reason) without globally
      * disabling SSE4.1.
      *
      * The reason we want to avoid vectorization is because despite working on
@@ -1098,7 +1071,7 @@ static xxh_u32 XXH32_round(xxh_u32 acc, xxh_u32 input)
      * - There's a ridiculous amount of lag from pmulld (10 cycles of latency on
      *   newer chips!) making it slightly slower to multiply four integers at
      *   once compared to four integers independently. Even when pmulld was
-     *   fastest, Sandy/Ivy Bridge, it is still not worth it to go into SSE
+     *   fastest, Sandy/Ivy Bridge, it's still not worth it to go into SSE
      *   just to multiply unless doing a long operation.
      *
      * - Four instructions are required to rotate,
@@ -1124,11 +1097,11 @@ static xxh_u32 XXH32_round(xxh_u32 acc, xxh_u32 input)
      *
      * Because of the 'r', the compiler has promised that seed will be in a
      * general purpose register and the '+' says that it will be 'read/write',
-     * so it has to assume it has changed. It is like volatile without all the
+     * so it has to assume it has changed. It's like volatile without all the
      * loads and stores.
      *
      * Since the argument has to be in a normal register (not an SSE register),
-     * each time XXH32_round is called, it is impossible to vectorize.
+     * each time XXH32_round is called, it's impossible to vectorize.
      */
     __asm__("" : "+r" (acc));
 #endif
@@ -1277,7 +1250,6 @@ XXH_PUBLIC_API XXH32_hash_t XXH32 (const void* input, size_t len, XXH32_hash_t s
 }
 
 
-
 /*******   Hash streaming   *******/
 
 XXH_PUBLIC_API XXH32_state_t* XXH32_createState(void)
@@ -1391,7 +1363,6 @@ XXH_PUBLIC_API XXH32_hash_t XXH32_digest (const XXH32_state_t* state)
     return XXH32_finalize(h32, (const xxh_u8*)state->mem32, state->memsize, XXH_aligned);
 }
 
-
 /*******   Canonical representation   *******/
 
 /*
@@ -1419,7 +1390,6 @@ XXH_PUBLIC_API XXH32_hash_t XXH32_hashFromCanonical(const XXH32_canonical_t* src
     return XXH_readBE32(src);
 }
 
-
 #ifndef XXH_NO_LONG_LONG
 
 /* *******************************************************************
@@ -1429,7 +1399,6 @@ XXH_PUBLIC_API XXH32_hash_t XXH32_hashFromCanonical(const XXH32_canonical_t* src
 /*******   Memory access   *******/
 
 typedef XXH64_hash_t xxh_u64;
-
 
 /*!
  * XXH_REROLL_XXH64:
@@ -1441,7 +1410,7 @@ typedef XXH64_hash_t xxh_u64;
  * However, on 32-bit hosts, because arithmetic needs to be done with two 32-bit
  * registers, and 64-bit arithmetic needs to be simulated, it isn't beneficial
  * to unroll. The code becomes ridiculously large (the largest function in the
- * binary on i386!), and rerolling it saves anywhere from 3kB to 20kB. It is
+ * binary on i386!), and rerolling it saves anywhere from 3kB to 20kB. It's
  * also slightly faster because it fits into cache better and is more likely
  * to be inlined by the compiler.
  *
@@ -1514,7 +1483,6 @@ static xxh_u64 XXH_swap64 (xxh_u64 x)
 }
 #endif
 
-
 /* XXH_FORCE_MEMORY_ACCESS==3 is an endian-independent byteshift load. */
 #if (defined(XXH_FORCE_MEMORY_ACCESS) && (XXH_FORCE_MEMORY_ACCESS==3))
 
@@ -1565,7 +1533,6 @@ XXH_readLE64_align(const void* ptr, XXH_alignment align)
         return XXH_CPU_LITTLE_ENDIAN ? *(const xxh_u64*)ptr : XXH_swap64(*(const xxh_u64*)ptr);
 }
 
-
 /*******   xxh64   *******/
 
 static const xxh_u64 PRIME64_1 = 0x9E3779B185EBCA87ULL;   /* 0b1001111000110111011110011011000110000101111010111100101010000111 */
@@ -1599,7 +1566,6 @@ static xxh_u64 XXH64_avalanche(xxh_u64 h64)
     h64 ^= h64 >> 32;
     return h64;
 }
-
 
 #define XXH_get64bits(p) XXH_readLE64_align(p, align)
 
@@ -1905,7 +1871,6 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_digest (const XXH64_state_t* state)
     return XXH64_finalize(h64, (const xxh_u8*)state->mem64, (size_t)state->total_len, XXH_aligned);
 }
 
-
 /******* Canonical representation   *******/
 
 XXH_PUBLIC_API void XXH64_canonicalFromHash(XXH64_canonical_t* dst, XXH64_hash_t hash)
@@ -1919,7 +1884,6 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src
 {
     return XXH_readBE64(src);
 }
-
 
 
 /* *********************************************************************
