@@ -4829,11 +4829,9 @@ namespace Catch {
     private:
 
         void writeDeclaration();
-
         void newlineIfNecessary();
 
-        bool m_tagIsOpen = false;
-        bool m_needsNewline = false;
+        bool m_tagIsOpen = false,m_needsNewline = false;
         std::vector<std::string> m_tags;
         std::string m_indent;
         std::ostream& m_os;
@@ -4880,8 +4878,7 @@ namespace Catch {
 
         XmlWriter xml;
         Timer suiteTimer;
-        std::string stdOutForSuite;
-        std::string stdErrForSuite;
+        std::string stdOutForSuite,stdErrForSuite;
         unsigned int unexpectedExceptions = 0;
         bool m_okToFail = false;
     };
@@ -5501,9 +5498,7 @@ namespace Catch {
         std::vector<SectionEndInfo> m_unfinishedSections;
         std::vector<ITracker*> m_activeSections;
         TrackerContext m_trackerContext;
-        bool m_lastAssertionPassed = false;
-        bool m_shouldReportUnexpected = true;
-        bool m_includeSuccessfulResults;
+        bool m_lastAssertionPassed = false, m_shouldReportUnexpected = true,m_includeSuccessfulResults;
     };
 
 } // end namespace Catch
@@ -5736,7 +5731,7 @@ namespace Catch {
 
     using StringMatcher = Matchers::Impl::MatcherBase<std::string>;
 
-    // This is the general overload that takes a any string matcher
+    // This is the general overload that takes an any string matcher
     // There is another overload, in catch_assertionhandler.h/.cpp, that only takes a string and infers
     // the Equals matcher (so the header does not mention matchers)
     void handleExceptionMatchExpr( AssertionHandler& handler, StringMatcher const& matcher, StringRef const& matcherString  ) {
@@ -5849,8 +5844,7 @@ public:
 		size_t m_stringIndex = 0;
 		size_t m_pos = 0;
 
-		size_t m_len = 0;
-		size_t m_end = 0;
+		size_t m_len = 0,m_end = 0;
 		bool m_suffix = false;
 
 		iterator(Column const& column, size_t stringIndex)
@@ -8952,12 +8946,9 @@ namespace Catch {
         ~OutputRedirect();
 
     private:
-        int m_originalStdout = -1;
-        int m_originalStderr = -1;
-        TempFile m_stdoutFile;
-        TempFile m_stderrFile;
-        std::string& m_stdoutDest;
-        std::string& m_stderrDest;
+        int m_originalStdout = -1,m_originalStderr = -1;
+        TempFile m_stdoutFile,m_stderrFile;
+        std::string& m_stdoutDest,m_stderrDest;
     };
 
 #endif
@@ -9506,9 +9497,8 @@ namespace Catch {
     Totals RunContext::runTest(TestCase const& testCase) {
         Totals prevTotals = m_totals;
 
-        std::string redirectedCout;
-        std::string redirectedCerr;
-
+        std::string redirectedCout,redirectedCerr;
+     
         auto const& testInfo = testCase.getTestCaseInfo();
 
         m_reporter->testCaseStarting(testInfo);
@@ -12663,8 +12653,7 @@ private:
     AssertionStats const& stats;
     AssertionResult const& result;
     Colour::Code colour;
-    std::string passOrFail;
-    std::string messageLabel;
+    std::string passOrFail,messageLabel;
     std::string message;
     std::vector<MessageInfo> messages;
     bool printInfoMessages;
