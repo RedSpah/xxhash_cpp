@@ -51,7 +51,6 @@
 #endif
 #include "xxhash.h"
 
-
 /* ===   Compiler specifics   === */
 
 #if defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L   /* >= C99 */
@@ -146,7 +145,7 @@
  * Therefore, we do a quick sanity check.
  *
  * If compiling Thumb-1 for a target which supports ARM instructions, we will
- * emit a warning, as it is not a "sane" platform to compile for.
+ * emit a warning, as it's not a "sane" platform to compile for.
  *
  * Usually, if this happens, it is because of an accident and you probably need
  * to specify -march, as you likely meant to compile for a newer architecture.
@@ -205,14 +204,14 @@
  * UGLY HACK:
  * GCC usually generates the best code with -O3 for xxHash.
  *
- * However, when targeting AVX2, it is overzealous in its unrolling resulting
+ * However, when targeting AVX2, it's overzealous in its unrolling resulting
  * in code roughly 3/4 the speed of Clang.
  *
  * There are other issues, such as GCC splitting _mm256_loadu_si256 into
  * _mm_loadu_si128 + _mm256_inserti128_si256. This is an optimization which
  * only applies to Sandy and Ivy Bridge... which don't even support AVX2.
  *
- * That is why when compiling the AVX2 version, it is recommended to use either
+ * That is why when compiling the AVX2 version, it's recommended to use either
  *   -O2 -mavx2 -march=haswell
  * or
  *   -O2 -mavx2 -mno-avx256-split-unaligned-load
@@ -232,7 +231,7 @@
 
 #if XXH_VECTOR == XXH_NEON
 /*
- * NEON's setup for vmlal_u32 is a little more complicated than it is on
+ * NEON's setup for vmlal_u32 is a little more complicated than it's on
  * SSE2, AVX2, and VSX.
  *
  * While PMULUDQ and VMULEUW both perform a mask, VMLAL.U32 performs an upcast.
@@ -424,7 +423,6 @@ XXH_FORCE_INLINE xxh_u64x2 XXH_vec_mule(xxh_u32x4 a, xxh_u32x4 b)
 # endif /* XXH_vec_mulo, XXH_vec_mule */
 #endif /* XXH_VECTOR == XXH_VSX */
 
-
 /* prefetch
  * can be disabled, by declaring XXH_NO_PREFETCH build macro */
 #if defined(XXH_NO_PREFETCH)
@@ -439,7 +437,6 @@ XXH_FORCE_INLINE xxh_u64x2 XXH_vec_mule(xxh_u32x4 a, xxh_u32x4 b)
 #    define XXH_PREFETCH(ptr) (void)(ptr)  /* disabled */
 #  endif
 #endif  /* XXH_NO_PREFETCH */
-
 
 /* ==========================================
  * XXH3 default settings
@@ -472,7 +469,7 @@ XXH_ALIGN(64) static const xxh_u8 kSecret[XXH_SECRET_DEFAULT_SIZE] = {
  * Does a 32-bit to 64-bit long multiply.
  *
  * Wraps __emulu on MSVC x86 because it tends to call __allmul when it doesn't
- * need to (but it shouldn't need to anyways, it is about 7 instructions to do
+ * need to (but it shouldn't need to anyways, it's about 7 instructions to do
  * a 64x64 multiply...). Since we know that this will _always_ emit MULL, we
  * use that instead of the normal method.
  *
@@ -886,7 +883,6 @@ XXH3_len_129to240_64b(const xxh_u8* XXH_RESTRICT input, size_t len,
     }
 }
 
-
 /* ===    Long Keys    === */
 
 #define STRIPE_LEN 64
@@ -896,7 +892,7 @@ XXH3_len_129to240_64b(const xxh_u8* XXH_RESTRICT input, size_t len,
 typedef enum { XXH3_acc_64bits, XXH3_acc_128bits } XXH3_accWidth_e;
 
 /*
- * XXH3_accumulate_512 is the tightest loop for long inputs, and it is the most optimized.
+ * XXH3_accumulate_512 is the tightest loop for long inputs, and it's the most optimized.
  *
  * It is a hardened version of UMAC, based off of FARSH's implementation.
  *
@@ -1155,7 +1151,6 @@ XXH3_scrambleAcc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
             /* xacc[i] ^= xsecret[i]; */
             __m128i const key_vec     = _mm_loadu_si128   (xsecret+i);
             __m128i const data_key    = _mm_xor_si128     (data_vec, key_vec);
-
             /* xacc[i] *= PRIME32_1; */
             __m128i const data_key_hi = _mm_shuffle_epi32 (data_key, _MM_SHUFFLE(0, 3, 0, 1));
             __m128i const prod_lo     = _mm_mul_epu32     (data_key, prime32);
@@ -1403,7 +1398,6 @@ XXH_FORCE_INLINE void XXH3_initCustomSecret(xxh_u8* customSecret, xxh_u64 seed64
         XXH_writeLE64(customSecret + 16*i + 8, XXH_readLE64(kSecret + 16*i + 8) - seed64);
     }
 }
-
 
 /*
  * XXH3_hashLong_64b_withSeed():
@@ -1990,7 +1984,6 @@ XXH128(const void* input, size_t len, XXH64_hash_t seed)
     return XXH3_128bits_withSeed(input, len, seed);
 }
 
-
 /* ===   XXH3 128-bit streaming   === */
 
 /* all the functions are actually the same as for 64-bit streaming variant,
@@ -2081,7 +2074,6 @@ XXH_PUBLIC_API int XXH128_cmp(const void* h128_1, const void* h128_2)
     if (hcmp) return hcmp;
     return (h1.low64 > h2.low64) - (h2.low64 > h1.low64);
 }
-
 
 /*======   Canonical representation   ======*/
 XXH_PUBLIC_API void
