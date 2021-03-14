@@ -137,7 +137,9 @@ namespace xxh
 		* code for such machines would bother using a C++ port rather than the original C version.
 		*/
 #ifndef XXH_VECTOR   /* can be predefined on command line */
-#	if defined(__AVX2__)
+#	if defined(__AVX512F__) 
+#		define XXH_VECTOR 3 /* AVX512 for Skylake and Icelake */
+#	elif defined(__AVX2__)
 #		define XXH_VECTOR 2 /* AVX2 for Haswell and Bulldozer */
 #	elif defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2))
 #		define XXH_VECTOR 1 /* SSE2 for Pentium 4 and all x86_64 */
@@ -148,15 +150,23 @@ namespace xxh
 
 		constexpr int vector_mode = XXH_VECTOR;
 
-#if XXH_VECTOR == 2		/* AVX2 for Haswell and Bulldozer */
+#if XXH_VECTOR == 3		/* AVX512 for Skylake and Icelake */
+		constexpr int acc_align = 64;
+		using avx512_underlying = __m512i;
+		using avx2_underlying = __m256i;
+		using sse2_underlying = __m128i;
+#elif XXH_VECTOR == 2		/* AVX2 for Haswell and Bulldozer */
 		constexpr int acc_align = 32;
+		using avx512_underlying = void;
 		using avx2_underlying = __m256i;
 		using sse2_underlying = __m128i;
 #elif XXH_VECTOR == 1	/* SSE2 for Pentium 4 and all x86_64 */
+		using avx512_underlying = void;
 		using avx2_underlying = void; //std::array<__m128i, 2>;
 		using sse2_underlying = __m128i;
 		constexpr int acc_align = 16;
 #else					/* Portable scalar version */
+		using avx512_underlying = void;
 		using avx2_underlying = void; //std::array<uint64_t, 4>;
 		using sse2_underlying = void; //std::array<uint64_t, 2>;
 		constexpr int acc_align = 8;
@@ -365,6 +375,12 @@ namespace xxh
 			using type = intrin::avx2_underlying;
 		};
 
+		template <>
+		struct vec_type<512>
+		{
+			using type = intrin::avx512_underlying;
+		};
+
 		/* Rationale
 		* On the surface level uint_type appears to be pointless,
 		* as it is just a copy of hash_type. They do use the same types,
@@ -408,6 +424,7 @@ namespace xxh
 	using vec64_t = vec_t<64>;
 	using vec128_t = vec_t<128>;
 	using vec256_t = vec_t<256>;
+	using vec512_t = vec_t<512>;
 
 	template <size_t N>
 	using uint_t = typename typedefs::uint_type<N>::type;
@@ -575,10 +592,16 @@ namespace xxh
 				return _mm256_loadu_si256(input);
 			}
 
+			if constexpr (N == 512)
+			{
+				return _mm512_loadu_si512(input);
+			}
+
 			if constexpr (N == 64)
 			{
 				return mem_ops::readLE<64>(input);
 			}
+
 		}
 
 
@@ -596,6 +619,11 @@ namespace xxh
 			if constexpr (N == 256)
 			{
 				return _mm256_xor_si256(a, b);
+			}
+
+			if constexpr (N == 512)
+			{
+				return _mm512_xor_si512(a, b);
 			}
 
 			if constexpr (N == 64)
@@ -620,6 +648,11 @@ namespace xxh
 				return _mm256_mul_epu32(a, b);
 			}
 
+			if constexpr (N == 512)
+			{
+				return _mm512_mul_epu32(a, b);
+			}
+
 			if constexpr (N == 64)
 			{
 				return a * b;
@@ -640,6 +673,11 @@ namespace xxh
 			if constexpr (N == 256)
 			{
 				return _mm256_add_epi64(a, b);
+			}
+
+			if constexpr (N == 512)
+			{
+				return _mm512_add_epi64(a, b);
 			}
 
 			if constexpr (N == 64)
@@ -664,6 +702,11 @@ namespace xxh
 				return _mm256_shuffle_epi32(a, _MM_SHUFFLE(S1, S2, S3, S4));
 			}
 
+			if constexpr (N == 512)
+			{
+				return _mm512_shuffle_epi32(a, _MM_SHUFFLE(S1, S2, S3, S4));
+			}
+
 			if constexpr (N == 64)
 			{
 				return a;
@@ -684,6 +727,11 @@ namespace xxh
 			if constexpr (N == 256)
 			{
 				return _mm256_set1_epi32(a);
+			}
+
+			if constexpr (N == 512)
+			{
+				return _mm512_set1_epi32(a);
 			}
 
 			if constexpr (N == 64)
@@ -708,6 +756,11 @@ namespace xxh
 				return _mm256_srli_epi64(n, a);
 			}
 
+			if constexpr (N == 512)
+			{
+				return _mm512_srli_epi64(n, a);
+			}
+
 			if constexpr (N == 64)
 			{
 				return n >> a;
@@ -728,6 +781,11 @@ namespace xxh
 			if constexpr (N == 256)
 			{
 				return _mm256_slli_epi64(n, a);
+			}
+
+			if constexpr (N == 512)
+			{
+				return _mm512_slli_epi64(n, a);
 			}
 
 			if constexpr (N == 64)

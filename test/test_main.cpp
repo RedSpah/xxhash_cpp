@@ -113,6 +113,11 @@ int main(int argc, char** argv)
 
 	std::cout << "xxhash_cpp compatibility testing, vectorization setting: " << static_cast<uint8_t>(xxh::detail3::vector_mode) << std::endl << std::endl; 
 
+	std::string test = "test";
+	xxh::hash64_t h = xxh::xxhash<64>(test);
+	xxh::hash64_t h2 = xxh::canonical64_t(h).get_hash();
+	std::cout << byte_print(h) << std::endl;
+	std::cout << byte_print(h2) << std::endl;
 
 	int all = 0, res = 0;
 
