@@ -115,7 +115,7 @@ int main(int argc, char** argv)
 
 	std::string test = "test";
 	xxh::hash64_t h = xxh::xxhash<64>(test);
-	xxh::hash64_t h2 = xxh::canonical64_t(h).get_hash();
+	xxh::hash64_t h2 = xxh::to_canonical<64>(h);
 	std::cout << byte_print(h) << std::endl;
 	std::cout << byte_print(h2) << std::endl;
 

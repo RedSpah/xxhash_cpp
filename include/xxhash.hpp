@@ -2137,4 +2137,12 @@ namespace xxh
 	using canonical32_t = canonical_t<32>;
 	using canonical64_t = canonical_t<64>;
 	using canonical128_t = canonical_t<128>;
+
+	template <size_t bit_mode>
+	hash_t<bit_mode> to_canonical(hash_t<bit_mode> hash)
+	{
+		static_assert(!(bit_mode != 128 && bit_mode != 64 && bit_mode != 32), "Canonical form can only be obtained from 32, 64 and 128 bit hashes.");
+		canonical_t<bit_mode> canon(hash);
+		return canon.get_hash();
+	}
 }
