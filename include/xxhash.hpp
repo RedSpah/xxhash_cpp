@@ -52,9 +52,9 @@ namespace xxh
 
 	namespace version
 	{
-		constexpr int cpp_version_major = 0;
-		constexpr int cpp_version_minor = 7;
-		constexpr int cpp_version_release = 3;
+		constexpr uint8_t cpp_version_major = 0;
+		constexpr uint8_t cpp_version_minor = 7;
+		constexpr uint8_t cpp_version_release = 3;
 	}
 
 	constexpr uint32_t version_number() 
@@ -812,7 +812,7 @@ namespace xxh
 		{
 			if constexpr (N == 32)
 			{
-				while ((p + 4) <= bEnd)
+				while (p + 4 <= bEnd)
 				{
 					hash_ret += readLE<32>(p) * PRIME<32>(3);
 					hash_ret = rotl<32>(hash_ret, 17) * PRIME<32>(4);
@@ -878,9 +878,9 @@ namespace xxh
 			const uint8_t* bEnd = p + len;
 			hash_t<N> hash_ret;
 
-			if (len >= (N / 2))
+			if (len >= N / 2)
 			{
-				const uint8_t* const limit = bEnd - (N / 2);
+				const uint8_t* const limit = bEnd - N / 2;
 				uint_t<N> v1 = seed + PRIME<N>(1) + PRIME<N>(2);
 				uint_t<N> v2 = seed + PRIME<N>(2);
 				uint_t<N> v3 = seed + 0;
@@ -902,14 +902,10 @@ namespace xxh
 				hash_ret = rotl<N>(v1, 1) + rotl<N>(v2, 7) + rotl<N>(v3, 12) + rotl<N>(v4, 18);
 
 				if constexpr (N == 64)
-				{
 					endian_align_sub_mergeround(hash_ret, v1, v2, v3, v4);
-				}
 			}
 			else 
-			{ 
 				hash_ret = seed + PRIME<N>(5); 
-			}
 
 			hash_ret += static_cast<hash_t<N>>(len);
 
@@ -1038,13 +1034,9 @@ namespace xxh
 					product = mul32to64(data_key & 0xFFFFFFFF, data_key >> 32);
 
 					if (width == acc_width::acc_128bits)
-					{
 						xacc[i ^ 1] = add<bits>(xacc[i ^ 1], data_vec);				
-					}
 					else
-					{
 						xacc[i] = add<bits>(xacc[i], data_vec);
-					}
 
 					xacc[i] = add<bits>(xacc[i], product);
 				}				
@@ -1079,9 +1071,7 @@ namespace xxh
 					xacc[i] = add<bits>(prod_lo, vec_ops::slli<bits>(prod_hi, 32)); 
 				}
 				else 
-				{
 					xacc[i] = mul<bits>(data_key, PRIME<32>(1));
-				}
 			}
 		}
 
@@ -1408,14 +1398,14 @@ namespace xxh
 				uint64_t acc = len * PRIME<64>(1);
 				size_t const nbRounds = len / 16;
 
-				for (size_t i = 0; i < 8; i++) 
+				for (uint8_t i = 0; i < 8; i++) 
 				{
 					acc += mix_16b(input + (i * 16), secret + (i * 16), seed);
 				}
 
 				acc = avalanche(acc);
 
-				for (size_t i = 8; i < nbRounds; i++) 
+				for (uint8_t i = 8; i < nbRounds; i++) 
 				{
 					acc += mix_16b(input + (i * 16), secret + ((i - 8) * 16) + midsize_startoffset, seed);
 				}
@@ -1433,7 +1423,7 @@ namespace xxh
 				acc.low64 = len * PRIME<64>(1);
 				acc.high64 = 0;
 
-				for (size_t i = 0; i < 4; i++) 
+				for (uint8_t i = 0; i < 4; i++) 
 				{
 					acc = mix_32b(acc, input + (i * 32), input + (i * 32) + 16, secret + (i * 32), seed);
 				}
@@ -1441,7 +1431,7 @@ namespace xxh
 				acc.low64 = avalanche(acc.low64);
 				acc.high64 = avalanche(acc.high64);
 
-				for (size_t i = 4; i < nbRounds; i++) 
+				for (uint8_t i = 4; i < nbRounds; i++) 
 				{
 					acc = mix_32b(acc, input + (i * 32), input + (i * 32) + 16, secret + midsize_startoffset + ((i - 4) * 32), seed);
 				}
@@ -1710,14 +1700,10 @@ namespace xxh
 				hash_ret = bit_ops::rotl<bit_mode>(v1, 1) + bit_ops::rotl<bit_mode>(v2, 7) + bit_ops::rotl<bit_mode>(v3, 12) + bit_ops::rotl<bit_mode>(v4, 18);
 
 				if constexpr (bit_mode == 64)
-				{
 					detail::endian_align_sub_mergeround(hash_ret, v1, v2, v3, v4);
-				}
 			}
 			else 
-			{ 
 				hash_ret = v3 + detail::PRIME<bit_mode>(5); 
-			}
 
 			hash_ret += static_cast<hash_t<bit_mode>>(total_len);
 
@@ -1939,9 +1925,7 @@ namespace xxh
 			(*this).seed = seed;
 
 			if (seed == 0)
-			{
 				secret = detail3::default_secret;
-			}
 			else
 			{
 				detail3::init_custom_secret(customSecret, seed);
