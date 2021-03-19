@@ -158,7 +158,6 @@ extern "C" {
 #endif /* XXH_INLINE_ALL || XXH_PRIVATE_API */
 
 
-
 /* ****************************************************************
  *  Stable API
  *****************************************************************/
@@ -366,7 +365,6 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src
 #endif  /* XXH_NO_LONG_LONG */
 
 #endif /* XXHASH_H_5627135585666179 */
-
 
 
 #if defined(XXH_STATIC_LINKING_ONLY) && !defined(XXHASH_H_STATIC_13879238742)
@@ -973,7 +971,6 @@ static int XXH_isLittleEndian(void)
 
 
 
-
 /* ****************************************
 *  Compiler-specific Functions and Macros
 ******************************************/
@@ -1089,7 +1086,7 @@ static xxh_u32 XXH32_round(xxh_u32 acc, xxh_u32 input)
      * UGLY HACK:
      * This inline assembly hack forces acc into a normal register. This is the
      * only thing that prevents GCC and Clang from autovectorizing the XXH32
-     * loop (pragmas and attributes don't work for some resason) without globally
+     * loop (pragmas and attributes don't work for some reason) without globally
      * disabling SSE4.1.
      *
      * The reason we want to avoid vectorization is because despite working on
@@ -1277,7 +1274,6 @@ XXH_PUBLIC_API XXH32_hash_t XXH32 (const void* input, size_t len, XXH32_hash_t s
 }
 
 
-
 /*******   Hash streaming   *******/
 
 XXH_PUBLIC_API XXH32_state_t* XXH32_createState(void)
@@ -1390,7 +1386,6 @@ XXH_PUBLIC_API XXH32_hash_t XXH32_digest (const XXH32_state_t* state)
 
     return XXH32_finalize(h32, (const xxh_u8*)state->mem32, state->memsize, XXH_aligned);
 }
-
 
 /*******   Canonical representation   *******/
 
@@ -1919,7 +1914,6 @@ XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src
 {
     return XXH_readBE64(src);
 }
-
 
 
 /* *********************************************************************
