@@ -3317,11 +3317,8 @@ namespace Catch {
 
         std::string tagsAsString() const;
 
-        std::string name;
-        std::string className;
-        std::string description;
-        std::vector<std::string> tags;
-        std::vector<std::string> lcaseTags;
+        std::string name,className,description;
+        std::vector<std::string> tags,lcaseTags;
         SourceLineInfo lineInfo;
         SpecialProperties properties;
     };
@@ -3871,17 +3868,14 @@ namespace Catch {
         UseColour::YesOrNo useColour = UseColour::Auto;
         WaitForKeypress::When waitForKeypress = WaitForKeypress::Never;
 
-        std::string outputFilename;
-        std::string name;
-        std::string processName;
+        std::string outputFilename,name,processName;
 #ifndef CATCH_CONFIG_DEFAULT_REPORTER
 #define CATCH_CONFIG_DEFAULT_REPORTER "console"
 #endif
         std::string reporterName = CATCH_CONFIG_DEFAULT_REPORTER;
 #undef CATCH_CONFIG_DEFAULT_REPORTER
 
-        std::vector<std::string> testsOrTags;
-        std::vector<std::string> sectionsToRun;
+        std::vector<std::string> testsOrTags,sectionsToRun;
     };
 
     class Config : public IConfig {
@@ -4072,8 +4066,7 @@ namespace Catch {
     };
 
     struct ReporterPreferences {
-        bool shouldRedirectStdOut = false;
-        bool shouldReportAllAssertions = false;
+        bool shouldRedirectStdOut = shouldReportAllAssertionsfalse = false;
     };
 
     template<typename T>
@@ -4100,8 +4093,7 @@ namespace Catch {
                     std::size_t _groupsCount );
 
         std::string name;
-        std::size_t groupIndex;
-        std::size_t groupsCounts;
+        std::size_t groupIndex,groupsCounts;
     };
 
     struct AssertionStats {
@@ -4152,8 +4144,7 @@ namespace Catch {
 
         TestCaseInfo testInfo;
         Totals totals;
-        std::string stdOut;
-        std::string stdErr;
+        std::string stdOut,stdErr;
         bool aborting;
     };
 
@@ -4371,8 +4362,7 @@ namespace Catch {
             using Assertions = std::vector<AssertionStats>;
             ChildSections childSections;
             Assertions assertions;
-            std::string stdOut;
-            std::string stdErr;
+            std::string stdOut,stdErr;
         };
 
         struct BySectionInfo {
@@ -4495,8 +4485,7 @@ namespace Catch {
 
         std::vector<std::shared_ptr<TestRunNode>> m_testRuns;
 
-        std::shared_ptr<SectionNode> m_rootSection;
-        std::shared_ptr<SectionNode> m_deepestSection;
+        std::shared_ptr<SectionNode> m_rootSection,m_deepestSection;
         std::vector<std::shared_ptr<SectionNode>> m_sectionStack;
         ReporterPreferences m_reporterPrefs;
     };
@@ -4832,8 +4821,7 @@ namespace Catch {
 
         void newlineIfNecessary();
 
-        bool m_tagIsOpen = false;
-        bool m_needsNewline = false;
+        bool m_tagIsOpen =  m_needsNewline = false;
         std::vector<std::string> m_tags;
         std::string m_indent;
         std::ostream& m_os;
@@ -5501,9 +5489,7 @@ namespace Catch {
         std::vector<SectionEndInfo> m_unfinishedSections;
         std::vector<ITracker*> m_activeSections;
         TrackerContext m_trackerContext;
-        bool m_lastAssertionPassed = false;
-        bool m_shouldReportUnexpected = true;
-        bool m_includeSuccessfulResults;
+        bool m_lastAssertionPassed = false,m_shouldReportUnexpected = true,m_includeSuccessfulResults;
     };
 
 } // end namespace Catch
@@ -5736,7 +5722,7 @@ namespace Catch {
 
     using StringMatcher = Matchers::Impl::MatcherBase<std::string>;
 
-    // This is the general overload that takes a any string matcher
+    // This is the general overload that takes any string matcher
     // There is another overload, in catch_assertionhandler.h/.cpp, that only takes a string and infers
     // the Equals matcher (so the header does not mention matchers)
     void handleExceptionMatchExpr( AssertionHandler& handler, StringMatcher const& matcher, StringRef const& matcherString  ) {
@@ -5847,10 +5833,8 @@ public:
 
 		Column const& m_column;
 		size_t m_stringIndex = 0;
-		size_t m_pos = 0;
+		size_t m_pos = m_len = m_end = 0;
 
-		size_t m_len = 0;
-		size_t m_end = 0;
 		bool m_suffix = false;
 
 		iterator(Column const& column, size_t stringIndex)
@@ -6591,8 +6575,7 @@ namespace detail {
     protected:
         Optionality m_optionality = Optionality::Optional;
         std::shared_ptr<BoundRef> m_ref;
-        std::string m_hint;
-        std::string m_description;
+        std::string m_hint,m_description;
 
         explicit ParserRefImpl( std::shared_ptr<BoundRef> const &ref ) : m_ref( ref ) {}
 
@@ -7428,8 +7411,7 @@ namespace {
             SetConsoleTextAttribute( stdoutHandle, _textAttribute | originalBackgroundAttributes );
         }
         HANDLE stdoutHandle;
-        WORD originalForegroundAttributes;
-        WORD originalBackgroundAttributes;
+        WORD originalForegroundAttributes,originalBackgroundAttributes;
     };
 
     IColourImpl* platformColourInstance() {
@@ -8952,12 +8934,9 @@ namespace Catch {
         ~OutputRedirect();
 
     private:
-        int m_originalStdout = -1;
-        int m_originalStderr = -1;
-        TempFile m_stdoutFile;
-        TempFile m_stderrFile;
-        std::string& m_stdoutDest;
-        std::string& m_stderrDest;
+        int m_originalStdout = m_originalStderr = -1;
+        TempFile m_stdoutFile,m_stderrFile;
+        std::string& m_stdoutDest,m_stderrDest;
     };
 
 #endif
@@ -9018,7 +8997,7 @@ namespace Catch {
             if (strerror_s(buffer, errno)) {
                 CATCH_RUNTIME_ERROR("Could not translate errno to a string");
             }
-            CATCH_RUNTIME_ERROR("Coul dnot open the temp file: '" << m_buffer << "' because: " << buffer);
+            CATCH_RUNTIME_ERROR("Couldn't open the temp file: '" << m_buffer << "' because: " << buffer);
         }
     }
 #else
@@ -9506,8 +9485,7 @@ namespace Catch {
     Totals RunContext::runTest(TestCase const& testCase) {
         Totals prevTotals = m_totals;
 
-        std::string redirectedCout;
-        std::string redirectedCerr;
+        std::string redirectedCout,redirectedCerr;
 
         auto const& testInfo = testCase.getTestCaseInfo();
 
@@ -9537,8 +9515,7 @@ namespace Catch {
                                   redirectedCerr,
                                   aborting()));
 
-        m_activeTestCase = nullptr;
-        m_testCaseTracker = nullptr;
+        m_activeTestCase =  m_testCaseTracker = nullptr;
 
         return deltaTotals;
     }
@@ -10009,9 +9986,7 @@ namespace Catch {
                     char const * const _branchName,
                     unsigned int _buildNumber );
 
-        unsigned int const majorVersion;
-        unsigned int const minorVersion;
-        unsigned int const patchNumber;
+        unsigned int const majorVersion,minorVersion,patchNumber;    
 
         // buildNumber is only used if branchName is not null
         char const * const branchName;
@@ -12663,9 +12638,7 @@ private:
     AssertionStats const& stats;
     AssertionResult const& result;
     Colour::Code colour;
-    std::string passOrFail;
-    std::string messageLabel;
-    std::string message;
+    std::string passOrFail,messageLabel,message;
     std::vector<MessageInfo> messages;
     bool printInfoMessages;
 };
