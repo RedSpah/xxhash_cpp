@@ -846,7 +846,7 @@ XXH3_len_129to240_64b(const xxh_u8* XXH_RESTRICT input, size_t len,
 
     {   xxh_u64 acc = len * PRIME64_1;
         int const nbRounds = (int)len / 16;
-        int i;
+        unsigned char i;
         for (i=0; i<8; i++) {
             acc += XXH3_mix16B(input+(16*i), secret+(16*i), seed);
         }
@@ -1128,7 +1128,6 @@ XXH3_scrambleAcc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
             /* xacc[i] ^= xsecret; */
             __m256i const key_vec     = _mm256_loadu_si256   (xsecret+i);
             __m256i const data_key    = _mm256_xor_si256     (data_vec, key_vec);
-
             /* xacc[i] *= PRIME32_1; */
             __m256i const data_key_hi = _mm256_shuffle_epi32 (data_key, _MM_SHUFFLE(0, 3, 0, 1));
             __m256i const prod_lo     = _mm256_mul_epu32     (data_key, prime32);
@@ -1155,7 +1154,6 @@ XXH3_scrambleAcc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
             /* xacc[i] ^= xsecret[i]; */
             __m128i const key_vec     = _mm_loadu_si128   (xsecret+i);
             __m128i const data_key    = _mm_xor_si128     (data_vec, key_vec);
-
             /* xacc[i] *= PRIME32_1; */
             __m128i const data_key_hi = _mm_shuffle_epi32 (data_key, _MM_SHUFFLE(0, 3, 0, 1));
             __m128i const prod_lo     = _mm_mul_epu32     (data_key, prime32);
@@ -1222,8 +1220,7 @@ XXH3_scrambleAcc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
     {         xxh_u64x2* const xacc    =       (xxh_u64x2*) acc;
         const xxh_u64x2* const xsecret = (const xxh_u64x2*) secret;
         /* constants */
-        xxh_u64x2 const v32  = { 32, 32 };
-        xxh_u64x2 const v47 = { 47, 47 };
+        xxh_u64x2 const v32  = { 32, 32 },v47 = { 47, 47 };
         xxh_u32x4 const prime = { PRIME32_1, PRIME32_1, PRIME32_1, PRIME32_1 };
         size_t i;
         for (i = 0; i < STRIPE_LEN / sizeof(xxh_u64x2); i++) {
@@ -1990,7 +1987,6 @@ XXH128(const void* input, size_t len, XXH64_hash_t seed)
     return XXH3_128bits_withSeed(input, len, seed);
 }
 
-
 /* ===   XXH3 128-bit streaming   === */
 
 /* all the functions are actually the same as for 64-bit streaming variant,
@@ -2081,7 +2077,6 @@ XXH_PUBLIC_API int XXH128_cmp(const void* h128_1, const void* h128_2)
     if (hcmp) return hcmp;
     return (h1.low64 > h2.low64) - (h2.low64 > h1.low64);
 }
-
 
 /*======   Canonical representation   ======*/
 XXH_PUBLIC_API void
