@@ -113,14 +113,12 @@ int main(int argc, char** argv)
 
 	std::cout << "xxhash_cpp compatibility testing, vectorization setting: " << static_cast<uint8_t>(xxh::detail3::vector_mode) << std::endl << std::endl; 
 
-
 	int all = 0, res = 0;
 
 	constexpr int32_t test_num = 1024;
 
 	std::minstd_rand rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count())); 
 	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
-
 
 	for (size_t i = 0; i < test_num; i++)
 	{
@@ -149,7 +147,6 @@ int main(int argc, char** argv)
 		XXH64_reset(hash_state_64_c, seed);
 
 
-
 		xxh::hash3_state64_t hash3_state_64_cpp_seed(seed);
 		xxh::hash3_state128_t hash3_state_128_cpp_seed(seed);
 		alignas(64) XXH3_state_t hash3_state_64_c_seed;
@@ -157,7 +154,6 @@ int main(int argc, char** argv)
 
 		XXH3_64bits_reset_withSeed(&hash3_state_64_c_seed, seed);
 		XXH3_128bits_reset_withSeed(&hash3_state_128_c_seed, seed);
-
 
 
 		xxh::hash3_state64_t hash3_state_64_cpp_secdef(secret_default_size.data(), xxh::detail3::secret_default_size);
@@ -169,7 +165,6 @@ int main(int argc, char** argv)
 		XXH3_128bits_reset_withSecret(&hash3_state_128_c_secdef, secret_default_size.data(), sizeof(secret_default_size));
 
 
-
 		xxh::hash3_state64_t hash3_state_64_cpp_secplus(secret_plus_size.data(), sizeof(secret_plus_size));
 		xxh::hash3_state128_t hash3_state_128_cpp_secplus(secret_plus_size.data(), sizeof(secret_plus_size));
 		alignas(64) XXH3_state_t hash3_state_64_c_secplus;
@@ -177,7 +172,6 @@ int main(int argc, char** argv)
 
 		XXH3_64bits_reset_withSecret(&hash3_state_64_c_secplus, secret_plus_size.data(), sizeof(secret_plus_size));
 		XXH3_128bits_reset_withSecret(&hash3_state_128_c_secplus, secret_plus_size.data(), sizeof(secret_plus_size));
-
 
 
 		xxh::hash3_state64_t hash3_state_64_cpp_secmin(secret_min_size.data(), sizeof(secret_min_size));
@@ -189,13 +183,11 @@ int main(int argc, char** argv)
 		XXH3_128bits_reset_withSecret(&hash3_state_128_c_secmin, secret_min_size.data(), sizeof(secret_min_size));
 
 
-
 		hash_state_32_cpp.update(input_buffer);
 		hash_state_64_cpp.update(input_buffer);
 
 		XXH32_update(hash_state_32_c, input_buffer.data(), test_buf_size);
 		XXH64_update(hash_state_64_c, input_buffer.data(), test_buf_size);
-
 
 		hash3_state_64_cpp_seed.update(input_buffer);
 		hash3_state_128_cpp_seed.update(input_buffer);
@@ -222,7 +214,6 @@ int main(int argc, char** argv)
 		XXH3_128bits_update(&hash3_state_128_c_secmin, input_buffer.data(), test_buf_size);
 
 
-
 		xxh::canonical32_t canonical_32_cpp(xxh::xxhash<32>(input_buffer, seed));
 		xxh::canonical64_t canonical_64_cpp(xxh::xxhash<64>(input_buffer, seed));
 
@@ -231,7 +222,6 @@ int main(int argc, char** argv)
 
 		XXH32_canonicalFromHash(&canonical_32_c, XXH32(input_buffer.data(), test_buf_size, seed));
 		XXH64_canonicalFromHash(&canonical_64_c, XXH64(input_buffer.data(), test_buf_size, seed));
-
 
 		xxh::canonical64_t canonical3_64_cpp_seed(xxh::xxhash3<64>(input_buffer, seed));
 		xxh::canonical128_t canonical3_128_cpp_seed(xxh::xxhash3<128>(input_buffer, seed));
@@ -242,7 +232,6 @@ int main(int argc, char** argv)
 		XXH64_canonicalFromHash(&canonical3_64_c_seed, XXH3_64bits_withSeed(input_buffer.data(), test_buf_size, seed));
 		XXH128_canonicalFromHash(&canonical3_128_c_seed, XXH3_128bits_withSeed(input_buffer.data(), test_buf_size, seed));
 
-
 		xxh::canonical64_t canonical3_64_cpp_secdef(xxh::xxhash3<64>(input_buffer, secret_default_size.data(), xxh::detail3::secret_default_size));
 		xxh::canonical128_t canonical3_128_cpp_secdef(xxh::xxhash3<128>(input_buffer, secret_default_size.data(), xxh::detail3::secret_default_size));
 
@@ -251,7 +240,6 @@ int main(int argc, char** argv)
 
 		XXH64_canonicalFromHash(&canonical3_64_c_secdef, XXH3_64bits_withSecret(input_buffer.data(), test_buf_size, secret_default_size.data(), secret_default_size.size()));
 		XXH128_canonicalFromHash(&canonical3_128_c_secdef, XXH3_128bits_withSecret(input_buffer.data(), test_buf_size, secret_default_size.data(), secret_default_size.size()));
-
 
 		xxh::canonical64_t canonical3_64_cpp_secplus(xxh::xxhash3<64>(input_buffer, secret_plus_size.data(), secret_plus_size.size()));
 		xxh::canonical128_t canonical3_128_cpp_secplus(xxh::xxhash3<128>(input_buffer, secret_plus_size.data(), secret_plus_size.size()));
@@ -262,7 +250,6 @@ int main(int argc, char** argv)
 		XXH64_canonicalFromHash(&canonical3_64_c_secplus, XXH3_64bits_withSecret(input_buffer.data(), test_buf_size, secret_plus_size.data(), secret_plus_size.size()));
 		XXH128_canonicalFromHash(&canonical3_128_c_secplus, XXH3_128bits_withSecret(input_buffer.data(), test_buf_size, secret_plus_size.data(), secret_plus_size.size()));
 
-
 		xxh::canonical64_t canonical3_64_cpp_secmin(xxh::xxhash3<64>(input_buffer, secret_min_size.data(), secret_min_size.size()));
 		xxh::canonical128_t canonical3_128_cpp_secmin(xxh::xxhash3<128>(input_buffer, secret_min_size.data(), secret_min_size.size()));
 
@@ -271,7 +258,6 @@ int main(int argc, char** argv)
 
 		XXH64_canonicalFromHash(&canonical3_64_c_secmin, XXH3_64bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
 		XXH128_canonicalFromHash(&canonical3_128_c_secmin, XXH3_128bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
-
 
 		DUMB_REQUIRE(XXH32(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<32>(input_buffer, seed));
 		DUMB_REQUIRE(XXH64(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<64>(input_buffer, seed));
@@ -298,13 +284,11 @@ int main(int argc, char** argv)
 		DUMB_REQUIRE(XXH3_128bits_digest(&hash3_state_128_c_secdef) == hash3_state_128_cpp_secdef.digest());
 
 
-
 		DUMB_REQUIRE(XXH3_64bits_digest(&hash3_state_64_c_secplus) == hash3_state_64_cpp_secplus.digest());
 		DUMB_REQUIRE(XXH3_128bits_digest(&hash3_state_128_c_secplus) == hash3_state_128_cpp_secplus.digest());
 
 		DUMB_REQUIRE(XXH3_64bits_digest(&hash3_state_64_c_secmin) == hash3_state_64_cpp_secmin.digest());
 		DUMB_REQUIRE(XXH3_128bits_digest(&hash3_state_128_c_secmin) == hash3_state_128_cpp_secmin.digest()); 
-
 
 
 		DUMB_REQUIRE(XXH32_hashFromCanonical(&canonical_32_c) == canonical_32_cpp.get_hash());
@@ -367,11 +351,10 @@ TEST_CASE("Results are the same as the original implementation for small inputs"
 
 TEST_CASE("Results are the same as the original implementation for large, randomly generated inputs", "[compatibility]")
 {
-	constexpr int32_t test_num = 1024;
+	constexpr uint64_t test_num = 1024;
 
 	std::minstd_rand rng(static_cast<uint32_t>(std::chrono::system_clock::now().time_since_epoch().count()));
 	std::uniform_int_distribution<uint32_t> dist(0, 4294967295U);
-
 
 	for (size_t i = 0; i < test_num; i++)
 	{
@@ -400,7 +383,6 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		XXH64_reset(&hash_state_64_c, seed);
 
 
-
 		xxh::hash3_state64_t hash3_state_64_cpp_seed(seed);
 		xxh::hash3_state128_t hash3_state_128_cpp_seed(seed);
 		alignas(64) XXH3_state_t hash3_state_64_c_seed;
@@ -408,7 +390,6 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		XXH3_64bits_reset_withSeed(&hash3_state_64_c_seed, seed);
 		XXH3_128bits_reset_withSeed(&hash3_state_128_c_seed, seed);   
-
 
 
 		xxh::hash3_state64_t hash3_state_64_cpp_secdef(secret_default_size.data(), xxh::detail3::secret_default_size);
@@ -420,7 +401,6 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		XXH3_128bits_reset_withSecret(&hash3_state_128_c_secdef, secret_default_size.data(), sizeof(secret_default_size));
 
 
-
 		xxh::hash3_state64_t hash3_state_64_cpp_secplus(secret_plus_size.data(), sizeof(secret_plus_size));
 		xxh::hash3_state128_t hash3_state_128_cpp_secplus( secret_plus_size.data(), sizeof(secret_plus_size));
 		alignas(64) XXH3_state_t hash3_state_64_c_secplus;
@@ -430,7 +410,6 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		XXH3_128bits_reset_withSecret(&hash3_state_128_c_secplus, secret_plus_size.data(), sizeof(secret_plus_size));
 
 
-
 		xxh::hash3_state64_t hash3_state_64_cpp_secmin(secret_min_size.data(), sizeof(secret_min_size));
 		xxh::hash3_state128_t hash3_state_128_cpp_secmin(secret_min_size.data(), sizeof(secret_min_size));
 		alignas(64) XXH3_state_t hash3_state_64_c_secmin;
@@ -438,7 +417,6 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		XXH3_64bits_reset_withSecret(&hash3_state_64_c_secmin, secret_min_size.data(), sizeof(secret_min_size));
 		XXH3_128bits_reset_withSecret(&hash3_state_128_c_secmin, secret_min_size.data(), sizeof(secret_min_size));
-
 
 
 		hash_state_32_cpp.update(input_buffer);
@@ -473,7 +451,6 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		XXH3_128bits_update(&hash3_state_128_c_secmin, input_buffer.data(), test_buf_size);
 
 
-
 		xxh::canonical32_t canonical_32_cpp(xxh::xxhash<32>(input_buffer, seed));
 		xxh::canonical64_t canonical_64_cpp(xxh::xxhash<64>(input_buffer, seed));
 
@@ -483,7 +460,6 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		XXH32_canonicalFromHash(&canonical_32_c, XXH32(input_buffer.data(), test_buf_size, seed));
 		XXH64_canonicalFromHash(&canonical_64_c, XXH64(input_buffer.data(), test_buf_size, seed));
 
-
 		xxh::canonical64_t canonical3_64_cpp_seed(xxh::xxhash3<64>(input_buffer, seed));
 		xxh::canonical128_t canonical3_128_cpp_seed(xxh::xxhash3<128>(input_buffer, seed));
 
@@ -492,7 +468,6 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		XXH64_canonicalFromHash(&canonical3_64_c_seed, XXH3_64bits_withSeed(input_buffer.data(), test_buf_size, seed));
 		XXH128_canonicalFromHash(&canonical3_128_c_seed, XXH3_128bits_withSeed(input_buffer.data(), test_buf_size, seed));
-
 
 		xxh::canonical64_t canonical3_64_cpp_secdef(xxh::xxhash3<64>(input_buffer, secret_default_size.data(), xxh::detail3::secret_default_size));
 		xxh::canonical128_t canonical3_128_cpp_secdef(xxh::xxhash3<128>(input_buffer,  secret_default_size.data(), xxh::detail3::secret_default_size));
@@ -512,7 +487,6 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		XXH64_canonicalFromHash(&canonical3_64_c_secplus, XXH3_64bits_withSecret(input_buffer.data(), test_buf_size, secret_plus_size.data(), secret_plus_size.size()));
 		XXH128_canonicalFromHash(&canonical3_128_c_secplus, XXH3_128bits_withSecret(input_buffer.data(), test_buf_size, secret_plus_size.data(), secret_plus_size.size()));
-
 
 		xxh::canonical64_t canonical3_64_cpp_secmin(xxh::xxhash3<64>(input_buffer, secret_min_size.data(), secret_min_size.size()));
 		xxh::canonical128_t canonical3_128_cpp_secmin(xxh::xxhash3<128>(input_buffer, secret_min_size.data(), secret_min_size.size()));
@@ -550,13 +524,11 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		REQUIRE(XXH3_128bits_digest(&hash3_state_128_c_secdef) == hash3_state_128_cpp_secdef.digest());
 
 
-
 		REQUIRE(XXH3_64bits_digest(&hash3_state_64_c_secplus) == hash3_state_64_cpp_secplus.digest());
 		REQUIRE(XXH3_128bits_digest(&hash3_state_128_c_secplus) == hash3_state_128_cpp_secplus.digest());
 
 		REQUIRE(XXH3_64bits_digest(&hash3_state_64_c_secmin) == hash3_state_64_cpp_secmin.digest());
 		REQUIRE(XXH3_128bits_digest(&hash3_state_128_c_secmin) == hash3_state_128_cpp_secmin.digest());
-
 
 
 		REQUIRE(XXH32_hashFromCanonical(&canonical_32_c) == canonical_32_cpp.get_hash());
