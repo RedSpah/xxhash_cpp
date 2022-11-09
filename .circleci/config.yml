@@ -7,7 +7,7 @@ version: 2.1
 jobs:
   build-test:
     machine: 
-      image: win/default
+      image: win/server-2019
     steps: 
       - checkout
       - run: choco install mingw
