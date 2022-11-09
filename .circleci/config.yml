@@ -5,18 +5,21 @@ version: 2.1
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
-  build:
+  build-test:
     machine: 
-      image: ubuntu-2004:2022.10.1
-
+      image: win/default
     steps: 
       - checkout
+      - run: choco install mingw
+      - run: choco install cmake
       - run: mkdir build && cd build
-      - run: for buildType in Debug Release; do cmake -DCMAKE_BUILD_TYPE=$buildType -DXXH_CPP_USE_AVX2=ON .. && cmake --build . --config $buildType && ctest --output-on-failure -C $buildType done        
+      - run: cmake -DCMAKE_BUILD_TYPE=Release -DXXH_CPP_USE_AVX2=ON .. 
+      - run: cmake --build . --config Release
+      - run: ctest --output-on-failure -C Release 
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   say-hello-workflow:
     jobs:
-      - build
+      - build-test
