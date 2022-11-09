@@ -14,12 +14,8 @@ jobs:
       - checkout
       - run: choco install mingw
       - run: choco install cmake
-      - run: $env:Path+=";$Env:ProgramFiles\CMake\bin"
       - run: mkdir build
-      - run: cd build
-      - run: cmake -DCMAKE_BUILD_TYPE=Release -DXXH_CPP_USE_AVX2=ON .. 
-      - run: cmake --build . --config Release
-      - run: ctest --output-on-failure -C Release 
+      - run: cd build; $env:Path+=";$Env:ProgramFiles\CMake\bin";  cmake -DCMAKE_BUILD_TYPE=Release -DXXH_CPP_USE_AVX2=ON ..; cmake --build . --config Release; ctest --output-on-failure -C Release 
 
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
