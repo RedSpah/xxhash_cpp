@@ -2,12 +2,14 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
+orbs:
+  win: circleci/windows@4.1
+
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
   build-test:
-    machine: 
-      image: win/server-2019
+    executor: win/server-2019
     steps: 
       - checkout
       - run: choco install mingw
