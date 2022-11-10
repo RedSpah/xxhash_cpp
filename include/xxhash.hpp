@@ -286,7 +286,7 @@ namespace xxh
     || (defined(_INTEGRAL_MAX_BITS) && _INTEGRAL_MAX_BITS >= 128)
 
 				__uint128_t product = (__uint128_t)lhs * (__uint128_t)rhs;
-				__uint128_t r128;
+				uint128_t r128;
 				r128.low64 = (uint64_t)(product);
 				r128.high64 = (uint64_t)(product >> 64);
 				return r128;
@@ -909,30 +909,31 @@ namespace xxh
 		***************************************/
 
 		template <size_t N> 
-		static inline uint_t<N> avalanche(uint_t<N> hash);
-
-		template <>
-		static inline uint_t<32> avalanche<32>(uint_t<32> hash) {
-			hash ^= hash >> 15;
-			hash *= PRIME<32>(2);
-			hash ^= hash >> 13;
-			hash *= PRIME<32>(3);
-			hash ^= hash >> 16;
-			return hash;
-		}
-
-		template <>
-		static inline uint_t<64> avalanche<64>(uint_t<64> hash) {
-			hash ^= hash >> 33;
-			hash *= PRIME<64>(2);
-			hash ^= hash >> 29;
-			hash *= PRIME<64>(3);
-			hash ^= hash >> 32;
-			return hash;
+		XXH_FORCE_INLINE uint_t<N> avalanche(uint_t<N> hash)
+		{
+			if constexpr (N == 32)
+			{
+				hash ^= hash >> 15;
+				hash *= PRIME<32>(2);
+				hash ^= hash >> 13;
+				hash *= PRIME<32>(3);
+				hash ^= hash >> 16;
+				return hash;
+			}
+			else if constexpr (N == 64)
+			{
+				hash ^= hash >> 33;
+				hash *= PRIME<64>(2);
+				hash ^= hash >> 29;
+				hash *= PRIME<64>(3);
+				hash ^= hash >> 32;
+				return hash;
+			}
+			else return 0;
 		}
 
 		template <size_t N>
-		static inline uint_t<N> round(uint_t<N> seed, uint_t<N> input)
+		XXH_FORCE_INLINE uint_t<N> round(uint_t<N> seed, uint_t<N> input)
 		{
 			seed += input * PRIME<N>(2);
 
@@ -949,7 +950,7 @@ namespace xxh
 			return seed;
 		}
 
-		static inline uint64_t mergeRound64(hash64_t acc, uint64_t val)
+		XXH_FORCE_INLINE uint64_t mergeRound64(hash64_t acc, uint64_t val)
 		{
 			val = round<64>(0, val);
 			acc ^= val;
@@ -957,7 +958,7 @@ namespace xxh
 			return acc;
 		}
 
-		static inline void endian_align_sub_mergeround(hash64_t& hash_ret, uint64_t v1, uint64_t v2, uint64_t v3, uint64_t v4)
+		XXH_FORCE_INLINE void endian_align_sub_mergeround(hash64_t& hash_ret, uint64_t v1, uint64_t v2, uint64_t v3, uint64_t v4)
 		{
 			hash_ret = mergeRound64(hash_ret, v1);
 			hash_ret = mergeRound64(hash_ret, v2);

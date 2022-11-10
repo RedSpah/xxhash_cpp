@@ -7,6 +7,7 @@
 #include <numeric>
 #include <cmath>
 #include <stdlib.h>
+#include <string>
 
 #define XXH_STATIC_LINKING_ONLY
 
@@ -18,6 +19,9 @@
 #define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
 
+void to_string(uint64_t l, uint64_t h) {}
+
+void to_string(xxh::uint128_t h128) {}
 
 template <typename T>
 std::string byte_print(T val)
@@ -757,6 +761,24 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		REQUIRE(memcmp(secret_buffer_c.data(), secret_buffer_cpp.data(), secret_buffer_c.size()) == 0);
 		REQUIRE(memcmp(secret_seed_buffer_c.data(), secret_seed_buffer_cpp.data(), secret_seed_buffer_c.size()) == 0);
+
+		std::string data = "kekl";
+
+#define checksum_bits 128
+		static_assert(checksum_bits == 64 || checksum_bits == 128);
+
+		xxh::hash3_state_t<checksum_bits> state;
+		state.update(data.data(), data.size());
+
+		// convert checksum to canonical byte order                                                                                     
+		xxh::canonical_t<checksum_bits> const canonical{ state.digest() };
+		auto const hash{ canonical.get_hash() };
+
+#if checksum_bits == 128
+		to_string(hash.low64, hash.high64);
+#else
+		to_string(hash);
+#endif
 	}
 }
 
