@@ -396,7 +396,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		std::generate(secret_default_size.begin(), secret_default_size.end(), [&rng, &dist]() {return dist(rng); });
 		std::generate(secret_plus_size.begin(), secret_plus_size.end(), [&rng, &dist]() {return dist(rng); });
 
-		uint64_t seed = dist(rng);
+		uint32_t seed = dist(rng);
 
 		xxh::hash_state32_t hash_state_32_cpp(seed);
 		xxh::hash_state64_t hash_state_64_cpp(seed);
@@ -579,7 +579,7 @@ TEST_CASE("Results are the same as the original implementation for large, random
 		XXH64_canonicalFromHash(&canonical3_64_c_secmin, XXH3_64bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
 		XXH128_canonicalFromHash(&canonical3_128_c_secmin, XXH3_128bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
 
-		REQUIRE(XXH32(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<32>(input_buffer, seed));
+		REQUIRE(XXH32(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<32>(input_buffer, static_cast<uint32_t>(seed)));
 		REQUIRE(XXH64(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<64>(input_buffer, seed));
 
 		std::array<uint64_t, 40> acc_c;

@@ -496,7 +496,7 @@ namespace xxh
 		{ 
 			if constexpr (N == 64)
 			{
-				return intrin::bit_ops::mult32to64(x, y);
+				return intrin::bit_ops::mult32to64(static_cast<uint32_t>(x), static_cast<uint32_t>(y));
 			}
 			else
 			{
