@@ -737,17 +737,17 @@ namespace xxh
 
 			if constexpr (N == 128)
 			{
-				return _mm_set1_epi32(a);
+				return _mm_set1_epi32(static_cast<int>(a));
 			}
 
 			if constexpr (N == 256)
 			{
-				return _mm256_set1_epi32(a);
+				return _mm256_set1_epi32(static_cast<int>(a));
 			}
 
 			if constexpr (N == 512)
 			{
-				return _mm512_set1_epi32(a);
+				return _mm512_set1_epi32(static_cast<int>(a));
 			}
 
 			if constexpr (N == 64)
