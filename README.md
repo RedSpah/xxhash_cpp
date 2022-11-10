@@ -1,7 +1,7 @@
 # xxhash_cpp
 Port of the xxHash library to C++17.
 
-[![xxhash_cpp](https://circleci.com/gh/RedSpah/xxhash_cpp.svg?style=svg)](https://circleci.com/gh/RedSpah/xxhash_cpp)
+[![CircleCI](https://dl.circleci.com/status-badge/img/gh/RedSpah/xxhash_cpp/tree/master.svg?style=shield)](https://dl.circleci.com/status-badge/redirect/gh/RedSpah/xxhash_cpp/tree/master)
 
 Compatibility
 ----
