@@ -1,7 +1,7 @@
 # xxhash_cpp
 Port of the xxHash library to C++17. Includes support for the experimental xxh3 algorithm.
 
-[![<ORG_NAME>](https://circleci.com/gh/redspah/xxhash_cpp.svg?style=svg)](https://circleci.com/gh/redspah/xxhash_cpp/?branch=dev)
+[![xxhash_cpp](https://circleci.com/gh/RedSpah/xxhash_cpp.svg?style=svg)](https://circleci.com/gh/RedSpah/xxhash_cpp/?branch=dev)
 
 [![Build Status](https://travis-ci.org/RedSpah/xxhash_cpp.svg?branch=master)](https://travis-ci.org/RedSpah/xxhash_cpp)
 
