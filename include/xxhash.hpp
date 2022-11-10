@@ -9,8 +9,8 @@
 /*
 xxHash - Extremely Fast Hash algorithm
 Header File
-Copyright (C) 2012-2020, Yann Collet.
-Copyright (C) 2017-2020, Red Gavin.
+Copyright (C) 2012-2022, Yann Collet.
+Copyright (C) 2017-2022, Red Gavin.
 All rights reserved.
 
 BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
@@ -54,7 +54,7 @@ namespace xxh
 	{
 		constexpr int cpp_version_major = 0;
 		constexpr int cpp_version_minor = 8;
-		constexpr int cpp_version_release = 0;
+		constexpr int cpp_version_release = 1;
 	}
 
 	constexpr uint32_t version_number() 
@@ -596,7 +596,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> loadu(const vec_t<N>* input)
 		{ 
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid template argument passed to xxh::vec_ops::loadu"); 
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid template argument passed to xxh::vec_ops::loadu");
 
 			if constexpr (N == 128)
 			{
@@ -625,7 +625,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> xorv(vec_t<N> a, vec_t<N> b)
 		{ 
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::xorv");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::xorv");
 		
 			if constexpr (N == 128)
 			{
@@ -652,7 +652,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> mul(vec_t<N> a, vec_t<N> b)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::mul");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::mul");
 
 			if constexpr (N == 128)
 			{
@@ -679,7 +679,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> add(vec_t<N> a, vec_t<N> b)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::add");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::add");
 
 			if constexpr (N == 128)
 			{
@@ -706,7 +706,7 @@ namespace xxh
 		template <size_t N, uint8_t S1, uint8_t S2, uint8_t S3, uint8_t S4>
 		XXH_FORCE_INLINE vec_t<N> shuffle(vec_t<N> a)
 		{ 
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::shuffle");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::shuffle");
 
 			if constexpr (N == 128)
 			{
@@ -733,7 +733,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> set1(int64_t a)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::set1");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::set1");
 
 			if constexpr (N == 128)
 			{
@@ -760,7 +760,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> srli(vec_t<N> n, int a)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::srli");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::srli");
 
 			if constexpr (N == 128)
 			{
@@ -787,7 +787,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> slli(vec_t<N> n, int a)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::slli");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::slli");
 
 			if constexpr (N == 128)
 			{
@@ -1080,7 +1080,6 @@ namespace xxh
 		*  Enums
 		***************************************/
 
-		//enum class acc_width : uint8_t { acc_64bits, acc_128bits };
 		enum class vec_mode : uint8_t { scalar = 0, sse2 = 1, avx2 = 2, avx512 = 3 };
 
 
@@ -1176,9 +1175,7 @@ namespace xxh
 
 				if constexpr (vector_mode == vec_mode::scalar)
 				{
-					// data_key  & 0xFFFFFFFF
 					product = mul32to64<bits>(srli<bits>(slli<bits>(data_key, 32),32), srli<bits>(data_key, 32));
-
 					xacc[i ^ 1] = add<bits>(xacc[i ^ 1], data_vec);
 					xacc[i] = add<bits>(xacc[i], product);
 				}
@@ -1331,13 +1328,6 @@ namespace xxh
 				uint64_t const bitflip = (readLE<64>(secret + 8) ^ readLE<64>(secret + 16)) - seed;
 				uint64_t const input64 = input2 + ((uint64_t)input1 << 32);
 				uint64_t keyed = input64 ^ bitflip;
-
-				//x ^= rotl<64>(x, 49) ^ rotl<64>(x, 24);
-				//x *= mix_constant;
-				//x ^= (x >> 35) + len;
-				//x *= mix_constant;
-
-				//return (x ^ (x >> 28));
 			
 				return rrmxmx(keyed, len);
 			}
