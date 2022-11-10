@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.8)
 
 project(xxhash_cpp  
-	VERSION 0.7.3 
+	VERSION 0.8.1
 	LANGUAGES CXX 
 	DESCRIPTION "C++ port of the xxhash library." 
 	HOMEPAGE_URL "https://github.com/RedSpah/xxhash_cpp")

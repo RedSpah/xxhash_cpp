@@ -9,8 +9,8 @@
 /*
 xxHash - Extremely Fast Hash algorithm
 Header File
-Copyright (C) 2012-2020, Yann Collet.
-Copyright (C) 2017-2020, Red Gavin.
+Copyright (C) 2012-2022, Yann Collet.
+Copyright (C) 2017-2022, Red Gavin.
 All rights reserved.
 
 BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
@@ -53,8 +53,8 @@ namespace xxh
 	namespace version
 	{
 		constexpr int cpp_version_major = 0;
-		constexpr int cpp_version_minor = 7;
-		constexpr int cpp_version_release = 3;
+		constexpr int cpp_version_minor = 8;
+		constexpr int cpp_version_release = 1;
 	}
 
 	constexpr uint32_t version_number() 
@@ -137,7 +137,9 @@ namespace xxh
 		* code for such machines would bother using a C++ port rather than the original C version.
 		*/
 #ifndef XXH_VECTOR   /* can be predefined on command line */
-#	if defined(__AVX2__)
+#	if defined(__AVX512F__) 
+#		define XXH_VECTOR 3 /* AVX512 for Skylake and Icelake */
+#	elif defined(__AVX2__)
 #		define XXH_VECTOR 2 /* AVX2 for Haswell and Bulldozer */
 #	elif defined(__SSE2__) || defined(_M_AMD64) || defined(_M_X64) || (defined(_M_IX86_FP) && (_M_IX86_FP == 2))
 #		define XXH_VECTOR 1 /* SSE2 for Pentium 4 and all x86_64 */
@@ -148,15 +150,23 @@ namespace xxh
 
 		constexpr int vector_mode = XXH_VECTOR;
 
-#if XXH_VECTOR == 2		/* AVX2 for Haswell and Bulldozer */
+#if XXH_VECTOR == 3		/* AVX512 for Skylake and Icelake */
+		constexpr int acc_align = 64;
+		using avx512_underlying = __m512i;
+		using avx2_underlying = __m256i;
+		using sse2_underlying = __m128i;
+#elif XXH_VECTOR == 2		/* AVX2 for Haswell and Bulldozer */
 		constexpr int acc_align = 32;
+		using avx512_underlying = void;
 		using avx2_underlying = __m256i;
 		using sse2_underlying = __m128i;
 #elif XXH_VECTOR == 1	/* SSE2 for Pentium 4 and all x86_64 */
+		using avx512_underlying = void;
 		using avx2_underlying = void; //std::array<__m128i, 2>;
 		using sse2_underlying = __m128i;
 		constexpr int acc_align = 16;
 #else					/* Portable scalar version */
+		using avx512_underlying = void;
 		using avx2_underlying = void; //std::array<uint64_t, 4>;
 		using sse2_underlying = void; //std::array<uint64_t, 2>;
 		constexpr int acc_align = 8;
@@ -276,7 +286,9 @@ namespace xxh
     || (defined(_INTEGRAL_MAX_BITS) && _INTEGRAL_MAX_BITS >= 128)
 
 				__uint128_t product = (__uint128_t)lhs * (__uint128_t)rhs;
-				uint128_t const r128 = { (uint64_t)(product), (uint64_t)(product >> 64) };
+				__uint128_t r128;
+				r128.low64 = (uint64_t)(product);
+				r128.high64 = (uint64_t)(product >> 64);
 				return r128;
 
 #elif defined(_M_X64) || defined(_M_IA64)
@@ -286,7 +298,11 @@ namespace xxh
 #endif
 				uint64_t product_high;
 				uint64_t const product_low = _umul128(lhs, rhs, &product_high);
-				return uint128_t{ product_low, product_high };
+				uint128_t r128;
+				r128.low64 = product_low;
+				r128.high64 = product_high;
+				return r128;
+
 #else
 				uint64_t const lo_lo = bit_ops::mult32to64(lhs & 0xFFFFFFFF, rhs & 0xFFFFFFFF);
 				uint64_t const hi_lo = bit_ops::mult32to64(lhs >> 32, rhs & 0xFFFFFFFF);
@@ -298,7 +314,9 @@ namespace xxh
 				uint64_t const upper = (hi_lo >> 32) + (cross >> 32) + hi_hi;
 				uint64_t const lower = (cross << 32) | (lo_lo & 0xFFFFFFFF);
 
-				uint128_t r128 = { lower, upper };
+				uint128_t r128;
+				r128.low64 = lower;
+				r128.high64 = upper;
 				return r128;
 #endif
 			}
@@ -365,6 +383,12 @@ namespace xxh
 			using type = intrin::avx2_underlying;
 		};
 
+		template <>
+		struct vec_type<512>
+		{
+			using type = intrin::avx512_underlying;
+		};
+
 		/* Rationale
 		* On the surface level uint_type appears to be pointless,
 		* as it is just a copy of hash_type. They do use the same types,
@@ -408,6 +432,7 @@ namespace xxh
 	using vec64_t = vec_t<64>;
 	using vec128_t = vec_t<128>;
 	using vec256_t = vec_t<256>;
+	using vec512_t = vec_t<512>;
 
 	template <size_t N>
 	using uint_t = typename typedefs::uint_type<N>::type;
@@ -466,9 +491,17 @@ namespace xxh
 			}
 		}
 
-		static inline uint64_t mul32to64(uint32_t x, uint32_t y)
+		template <size_t N = 64>
+		static inline vec_t<N> mul32to64(vec_t<N> x, vec_t<N> y)
 		{ 
-			return intrin::bit_ops::mult32to64(x, y); 
+			if constexpr (N == 64)
+			{
+				return intrin::bit_ops::mult32to64(static_cast<uint32_t>(x), static_cast<uint32_t>(y));
+			}
+			else
+			{
+				return 0;
+			}
 		}
 
 		static inline uint128_t mul64to128(uint64_t x, uint64_t y)
@@ -563,7 +596,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> loadu(const vec_t<N>* input)
 		{ 
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid template argument passed to xxh::vec_ops::loadu"); 
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid template argument passed to xxh::vec_ops::loadu");
 
 			if constexpr (N == 128)
 			{
@@ -575,10 +608,16 @@ namespace xxh
 				return _mm256_loadu_si256(input);
 			}
 
+			if constexpr (N == 512)
+			{
+				return _mm512_loadu_si512(input);
+			}
+
 			if constexpr (N == 64)
 			{
 				return mem_ops::readLE<64>(input);
 			}
+
 		}
 
 
@@ -586,7 +625,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> xorv(vec_t<N> a, vec_t<N> b)
 		{ 
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::xorv");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::xorv");
 		
 			if constexpr (N == 128)
 			{
@@ -596,6 +635,11 @@ namespace xxh
 			if constexpr (N == 256)
 			{
 				return _mm256_xor_si256(a, b);
+			}
+
+			if constexpr (N == 512)
+			{
+				return _mm512_xor_si512(a, b);
 			}
 
 			if constexpr (N == 64)
@@ -608,7 +652,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> mul(vec_t<N> a, vec_t<N> b)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::mul");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::mul");
 
 			if constexpr (N == 128)
 			{
@@ -618,6 +662,11 @@ namespace xxh
 			if constexpr (N == 256)
 			{
 				return _mm256_mul_epu32(a, b);
+			}
+
+			if constexpr (N == 512)
+			{
+				return _mm512_mul_epu32(a, b);
 			}
 
 			if constexpr (N == 64)
@@ -630,7 +679,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> add(vec_t<N> a, vec_t<N> b)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::add");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::add");
 
 			if constexpr (N == 128)
 			{
@@ -640,6 +689,11 @@ namespace xxh
 			if constexpr (N == 256)
 			{
 				return _mm256_add_epi64(a, b);
+			}
+
+			if constexpr (N == 512)
+			{
+				return _mm512_add_epi64(a, b);
 			}
 
 			if constexpr (N == 64)
@@ -652,7 +706,7 @@ namespace xxh
 		template <size_t N, uint8_t S1, uint8_t S2, uint8_t S3, uint8_t S4>
 		XXH_FORCE_INLINE vec_t<N> shuffle(vec_t<N> a)
 		{ 
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::shuffle");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::shuffle");
 
 			if constexpr (N == 128)
 			{
@@ -664,6 +718,11 @@ namespace xxh
 				return _mm256_shuffle_epi32(a, _MM_SHUFFLE(S1, S2, S3, S4));
 			}
 
+			if constexpr (N == 512)
+			{
+				return _mm512_shuffle_epi32(a, _MM_SHUFFLE(S1, S2, S3, S4));
+			}
+
 			if constexpr (N == 64)
 			{
 				return a;
@@ -672,18 +731,23 @@ namespace xxh
 
 
 		template <size_t N>
-		XXH_FORCE_INLINE vec_t<N> set1(int a)
+		XXH_FORCE_INLINE vec_t<N> set1(int64_t a)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::set1");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::set1");
 
 			if constexpr (N == 128)
 			{
-				return _mm_set1_epi32(a);
+				return _mm_set1_epi32(static_cast<int>(a));
 			}
 
 			if constexpr (N == 256)
 			{
-				return _mm256_set1_epi32(a);
+				return _mm256_set1_epi32(static_cast<int>(a));
+			}
+
+			if constexpr (N == 512)
+			{
+				return _mm512_set1_epi32(static_cast<int>(a));
 			}
 
 			if constexpr (N == 64)
@@ -696,7 +760,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> srli(vec_t<N> n, int a)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::srli");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::srli");
 
 			if constexpr (N == 128)
 			{
@@ -706,6 +770,11 @@ namespace xxh
 			if constexpr (N == 256)
 			{
 				return _mm256_srli_epi64(n, a);
+			}
+
+			if constexpr (N == 512)
+			{
+				return _mm512_srli_epi64(n, a);
 			}
 
 			if constexpr (N == 64)
@@ -718,7 +787,7 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> slli(vec_t<N> n, int a)
 		{
-			static_assert(!(N != 128 && N != 256 && N != 64), "Invalid argument passed to xxh::vec_ops::slli");
+			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::slli");
 
 			if constexpr (N == 128)
 			{
@@ -730,11 +799,77 @@ namespace xxh
 				return _mm256_slli_epi64(n, a);
 			}
 
+			if constexpr (N == 512)
+			{
+				return _mm512_slli_epi64(n, a);
+			}
+
 			if constexpr (N == 64)
 			{
 				return n << a;
 			}
 		}
+	}
+
+	/* *************************************
+	*  Canonical represenation
+	***************************************/
+
+	template <size_t bit_mode>
+	struct canonical_t
+	{
+		std::array<uint8_t, bit_mode / 8> digest{ 0 };
+
+		canonical_t(hash_t<bit_mode> hash)
+		{
+			if constexpr (bit_mode < 128)
+			{
+				if (mem_ops::is_little_endian())
+				{
+					hash = bit_ops::swap<bit_mode>(hash);
+				}
+
+				memcpy(digest.data(), &hash, sizeof(canonical_t<bit_mode>));
+			}
+			else
+			{
+				if (mem_ops::is_little_endian())
+				{
+					hash.low64 = bit_ops::swap<64>(hash.low64);
+					hash.high64 = bit_ops::swap<64>(hash.high64);
+				}
+
+				memcpy(digest.data(), &hash.high64, sizeof(hash.high64));
+				memcpy(digest.data() + sizeof(hash.high64), &hash.low64, sizeof(hash.low64));
+			}
+		}
+
+		hash_t<bit_mode> get_hash() const
+		{
+			if constexpr (bit_mode < 128)
+			{
+				return mem_ops::readBE<bit_mode>(&digest);
+			}
+			else
+			{
+				return { mem_ops::readBE<64>(&digest[8]), mem_ops::readBE<64>(&digest) };
+			}
+		}
+	};
+
+	using canonical32_t = canonical_t<32>;
+	using canonical64_t = canonical_t<64>;
+	using canonical128_t = canonical_t<128>;
+
+	template <size_t bit_mode>
+	inline hash_t<bit_mode> to_canonical(hash_t<bit_mode> hash)
+	{
+		static_assert(!(bit_mode != 128 && bit_mode != 64 && bit_mode != 32), "Canonical form can only be obtained from 32, 64 and 128 bit hashes.");
+		canonical_t<bit_mode> canon(hash);
+		hash_t<bit_mode> res;
+		memcpy(&res, &canon, bit_mode / 4);
+
+		return res;
 	}
 
 
@@ -772,6 +907,29 @@ namespace xxh
 		/* *************************************
 		*  Functions
 		***************************************/
+
+		template <size_t N> 
+		static inline uint_t<N> avalanche(uint_t<N> hash);
+
+		template <>
+		static inline uint_t<32> avalanche<32>(uint_t<32> hash) {
+			hash ^= hash >> 15;
+			hash *= PRIME<32>(2);
+			hash ^= hash >> 13;
+			hash *= PRIME<32>(3);
+			hash ^= hash >> 16;
+			return hash;
+		}
+
+		template <>
+		static inline uint_t<64> avalanche<64>(uint_t<64> hash) {
+			hash ^= hash >> 33;
+			hash *= PRIME<64>(2);
+			hash ^= hash >> 29;
+			hash *= PRIME<64>(3);
+			hash ^= hash >> 32;
+			return hash;
+		}
 
 		template <size_t N>
 		static inline uint_t<N> round(uint_t<N> seed, uint_t<N> input)
@@ -826,13 +984,7 @@ namespace xxh
 					p++;
 				}
 
-				hash_ret ^= hash_ret >> 15;
-				hash_ret *= PRIME<32>(2);
-				hash_ret ^= hash_ret >> 13;
-				hash_ret *= PRIME<32>(3);
-				hash_ret ^= hash_ret >> 16;
-
-				return hash_ret;
+				return avalanche<32>(hash_ret);
 			}
 			else
 			{
@@ -859,13 +1011,7 @@ namespace xxh
 					p++;
 				}
 
-				hash_ret ^= hash_ret >> 33;
-				hash_ret *= PRIME<64>(2);
-				hash_ret ^= hash_ret >> 29;
-				hash_ret *= PRIME<64>(3);
-				hash_ret ^= hash_ret >> 32;
-
-				return hash_ret;
+				return avalanche<64>(hash_ret);
 			}
 		}
 
@@ -934,8 +1080,7 @@ namespace xxh
 		*  Enums
 		***************************************/
 
-		enum class acc_width : uint8_t { acc_64bits, acc_128bits };
-		enum class vec_mode : uint8_t { scalar = 0, sse2 = 1, avx2 = 2 };
+		enum class vec_mode : uint8_t { scalar = 0, sse2 = 1, avx2 = 2, avx512 = 3 };
 
 
 		/* *************************************
@@ -956,7 +1101,7 @@ namespace xxh
 
 		constexpr vec_mode vector_mode = static_cast<vec_mode>(intrin::vector_mode);
 		constexpr uint64_t acc_align = intrin::acc_align;
-		constexpr std::array<uint64_t, 3> vector_bit_width { 64, 128, 256 };
+		constexpr std::array<uint64_t, 4> vector_bit_width { 64, 128, 256, 512 };
 
 		
 		/* *************************************
@@ -985,7 +1130,7 @@ namespace xxh
 		*  Functions
 		***************************************/
 	
-		static hash_t<64> avalanche(hash_t<64> h64)
+		XXH_FORCE_INLINE hash_t<64> avalanche(hash_t<64> h64)
 		{
 			constexpr uint64_t avalanche_mul_prime = 0x165667919E3779F9ULL;
 
@@ -995,10 +1140,25 @@ namespace xxh
 			return h64;
 		}
 
-		template <vec_mode V>
-		XXH_FORCE_INLINE void accumulate_512(void* XXH_RESTRICT acc, const void* XXH_RESTRICT input, const void* XXH_RESTRICT secret, acc_width width)
+		XXH_FORCE_INLINE hash_t<64> rrmxmx(hash_t<64> h64, uint64_t len)
 		{
-			constexpr uint64_t bits = vector_bit_width[static_cast<uint8_t>(V)];
+			h64 ^= rotl<64>(h64, 49) ^ rotl<64>(h64, 24);
+			h64 *= 0x9FB21C651E98DF25ULL;
+			h64 ^= (h64 >> 35) + len;
+			h64 *= 0x9FB21C651E98DF25ULL;
+			h64 ^= (h64 >> 28);
+			return h64;
+		}
+
+		XXH_FORCE_INLINE void combine_16(void* dest, hash128_t h128)
+		{
+			writeLE<64>(dest, readLE<64>(dest) ^ h128.low64);
+			writeLE<64>((uint8_t*)dest + 8, readLE<64>((uint8_t*)dest + 8) ^ h128.high64);
+		}
+
+		XXH_FORCE_INLINE void accumulate_512(void* XXH_RESTRICT acc, const void* XXH_RESTRICT input, const void* XXH_RESTRICT secret)
+		{
+			constexpr uint64_t bits = vector_bit_width[static_cast<uint8_t>(vector_mode)];
 
 			using vec_t = vec_t<bits>;
 			
@@ -1013,48 +1173,27 @@ namespace xxh
 				vec_t const data_key = xorv<bits>(data_vec, key_vec);
 				vec_t product = set1<bits>(0);
 
-				if constexpr (V != vec_mode::scalar)
+				if constexpr (vector_mode == vec_mode::scalar)
 				{
-					vec_t const data_key_lo = shuffle<bits, 0, 3, 0, 1>(data_key);
-
-					product = mul<bits>(data_key, data_key_lo);
-
-					if (width == acc_width::acc_128bits)
-					{
-						vec_t const data_swap = shuffle<bits, 1, 0, 3, 2>(data_vec);
-						vec_t const sum = add<bits>(xacc[i], data_swap);
-
-						xacc[i] = add<bits>(sum, product);
-					}
-					else
-					{
-						vec_t const sum = add<bits>(xacc[i], data_vec);
-
-						xacc[i] = add<bits>(sum, product);
-					}
+					product = mul32to64<bits>(srli<bits>(slli<bits>(data_key, 32),32), srli<bits>(data_key, 32));
+					xacc[i ^ 1] = add<bits>(xacc[i ^ 1], data_vec);
+					xacc[i] = add<bits>(xacc[i], product);
 				}
 				else
 				{
-					product = mul32to64(data_key & 0xFFFFFFFF, data_key >> 32);
+					vec_t const data_key_lo = shuffle<bits, 0, 3, 0, 1>(data_key);
+					product = mul<bits>(data_key, data_key_lo);
 
-					if (width == acc_width::acc_128bits)
-					{
-						xacc[i ^ 1] = add<bits>(xacc[i ^ 1], data_vec);				
-					}
-					else
-					{
-						xacc[i] = add<bits>(xacc[i], data_vec);
-					}
-
-					xacc[i] = add<bits>(xacc[i], product);
+					vec_t const data_swap = shuffle<bits, 1, 0, 3, 2>(data_vec);
+					vec_t const sum = add<bits>(xacc[i], data_swap);
+					xacc[i] = add<bits>(sum, product);
 				}				
 			}
 		}
 
-		template <vec_mode V>
 		XXH_FORCE_INLINE void scramble_acc(void* XXH_RESTRICT acc, const void* XXH_RESTRICT secret)
 		{
-			constexpr uint64_t bits = vector_bit_width[static_cast<uint8_t>(V)];;
+			constexpr uint64_t bits = vector_bit_width[static_cast<uint8_t>(vector_mode)];;
 
 			using vec_t = vec_t<bits>;
 
@@ -1069,57 +1208,54 @@ namespace xxh
 				vec_t const key_vec = loadu<bits>(xsecret + i);
 				vec_t const data_key = xorv<bits>(data_vec, key_vec);
 				
-				if constexpr (V != vec_mode::scalar)
+				if constexpr (vector_mode == vec_mode::scalar)
+				{
+					xacc[i] = mul<bits>(data_key, set1<bits>(PRIME<32>(1)));
+				}
+				else
 				{
 					vec_t const prime32 = set1<bits>(PRIME<32>(1));
 					vec_t const data_key_hi = shuffle<bits, 0, 3, 0, 1>(data_key);
 					vec_t const prod_lo = mul<bits>(data_key, prime32);
 					vec_t const prod_hi = mul<bits>(data_key_hi, prime32);
 
-					xacc[i] = add<bits>(prod_lo, vec_ops::slli<bits>(prod_hi, 32)); 
-				}
-				else 
-				{
-					xacc[i] = mul<bits>(data_key, PRIME<32>(1));
+					xacc[i] = add<bits>(prod_lo, vec_ops::slli<bits>(prod_hi, 32));
 				}
 			}
 		}
 
-		XXH_FORCE_INLINE void accumulate(uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT input, const uint8_t* XXH_RESTRICT secret, size_t nbStripes, acc_width accWidth)
+		XXH_FORCE_INLINE void accumulate(uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT input, const uint8_t* XXH_RESTRICT secret, size_t nbStripes)
 		{
 			for (size_t n = 0; n < nbStripes; n++) 
 			{
 				const uint8_t* const in = input + n * stripe_len;
 
 				intrin::prefetch(in + prefetch_distance);
-				accumulate_512<vector_mode>(acc, in, secret + n * secret_consume_rate, accWidth);
+				accumulate_512(acc, in, secret + n * secret_consume_rate);
 			}
 		}
 
-		XXH_FORCE_INLINE void hash_long_internal_loop(uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT input, size_t len, const uint8_t* XXH_RESTRICT secret, size_t secretSize, acc_width accWidth)
+		XXH_FORCE_INLINE void hash_long_internal_loop(uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT input, size_t len, const uint8_t* XXH_RESTRICT secret, size_t secretSize)
 		{
 			size_t const nb_rounds = (secretSize - stripe_len) / secret_consume_rate;
 			size_t const block_len = stripe_len * nb_rounds;
-			size_t const nb_blocks = len / block_len;
+			size_t const nb_blocks = (len-1) / block_len;
 
 			for (size_t n = 0; n < nb_blocks; n++) 
 			{
-				accumulate(acc, input + n * block_len, secret, nb_rounds, accWidth);
-				scramble_acc<vector_mode>(acc, secret + secretSize - stripe_len);
+				accumulate(acc, input + n * block_len, secret, nb_rounds);
+				scramble_acc(acc, secret + secretSize - stripe_len);
 			}
 
 			/* last partial block */
-			size_t const nbStripes = (len - (block_len * nb_blocks)) / stripe_len;
+			size_t const nbStripes = ((len - 1) - (block_len * nb_blocks)) / stripe_len;
 
-			accumulate(acc, input + nb_blocks * block_len, secret, nbStripes, accWidth);
+			accumulate(acc, input + nb_blocks * block_len, secret, nbStripes);
 
 			/* last stripe */
-			if (len & (stripe_len - 1)) 
-			{
-				const uint8_t* const p = input + len - stripe_len;
+			const uint8_t* const p = input + len - stripe_len;
 
-				accumulate_512<vector_mode>(acc, p, secret + secretSize - stripe_len - secret_lastacc_start, accWidth);
-			}
+			accumulate_512(acc, p, secret + secretSize - stripe_len - secret_lastacc_start);
 		}
 
 		XXH_FORCE_INLINE uint64_t mix_2_accs(const uint64_t* XXH_RESTRICT acc, const uint8_t* XXH_RESTRICT secret)
@@ -1159,9 +1295,7 @@ namespace xxh
 				uint32_t const combined = ((uint32_t)c1 << 16) | (((uint32_t)c2) << 24) | (((uint32_t)c3) << 0) | (((uint32_t)len) << 8);
 				uint64_t const bitflip = (readLE<32>(secret) ^ readLE<32>(secret + 4)) + seed;
 				uint64_t const keyed = (uint64_t)combined ^ bitflip;
-				uint64_t const mixed = keyed * PRIME<64>(1);
-
-				return avalanche(mixed);
+				return detail::avalanche<64>(keyed);
 			}
 			else
 			{
@@ -1174,9 +1308,7 @@ namespace xxh
 				uint64_t const bitfliph = (readLE<32>(secret + 8) ^ readLE<32>(secret + 12)) - seed;
 				uint64_t const keyed_lo = (uint64_t)combinedl ^ bitflipl;
 				uint64_t const keyed_hi = (uint64_t)combinedh ^ bitfliph;
-				uint64_t const mixedl = keyed_lo * PRIME<64>(1);
-				uint64_t const mixedh = keyed_hi * PRIME<64>(5);
-				hash128_t const h128 = {avalanche(mixedl), avalanche(mixedh)};
+				hash128_t const h128 = { detail::avalanche<64>(keyed_lo), detail::avalanche<64>(keyed_hi)};
 
 				return h128;
 			}
@@ -1195,14 +1327,9 @@ namespace xxh
 				uint32_t const input2 = readLE<32>(input + len - 4);
 				uint64_t const bitflip = (readLE<64>(secret + 8) ^ readLE<64>(secret + 16)) - seed;
 				uint64_t const input64 = input2 + ((uint64_t)input1 << 32);
-				uint64_t x = input64 ^ bitflip;
-
-				x ^= rotl<64>(x, 49) ^ rotl<64>(x, 24);
-				x *= mix_constant;
-				x ^= (x >> 35) + len;
-				x *= mix_constant;
-
-				return (x ^ (x >> 28));
+				uint64_t keyed = input64 ^ bitflip;
+			
+				return rrmxmx(keyed, len);
 			}
 			else
 			{
@@ -1288,14 +1415,14 @@ namespace xxh
 			{
 				if constexpr (N == 64)
 				{
-					return avalanche((PRIME<64>(1) + seed) ^ (readLE<64>(secret + 56) ^ readLE<64>(secret + 64)));
+					return detail::avalanche<64>((seed) ^ (readLE<64>(secret + 56) ^ readLE<64>(secret + 64)));
 				}
 				else
 				{
 					uint64_t const bitflipl = readLE<64>(secret + 64) ^ readLE<64>(secret + 72);
 					uint64_t const bitfliph = readLE<64>(secret + 80) ^ readLE<64>(secret + 88);
 
-					return hash128_t(avalanche((PRIME<64>(1) + seed) ^ bitflipl), avalanche((PRIME<64>(2) - seed) ^ bitfliph));
+					return hash128_t(detail::avalanche<64>(( seed) ^ bitflipl), detail::avalanche<64>(( seed) ^ bitfliph));
 				}			
 			}
 		}
@@ -1307,14 +1434,14 @@ namespace xxh
 
 			if constexpr (N == 64)
 			{				
-				hash_long_internal_loop(acc.data(), input, len, secret, secretSize, acc_width::acc_64bits);
+				hash_long_internal_loop(acc.data(), input, len, secret, secretSize);
 
 				/* converge into final hash */
 				return merge_accs(acc.data(), secret + secret_mergeaccs_start, (uint64_t)len * PRIME<64>(1));
 			}
 			else
 			{
-				hash_long_internal_loop(acc.data(), input, len, secret, secretSize, acc_width::acc_128bits);
+				hash_long_internal_loop(acc.data(), input, len, secret, secretSize);
 
 				/* converge into final hash */
 				uint64_t const low64 = merge_accs(acc.data(), secret + secret_mergeaccs_start, (uint64_t)len * PRIME<64>(1));
@@ -1460,14 +1587,14 @@ namespace xxh
 		template <size_t N>
 		XXH_NO_INLINE hash_t<N> xxhash3_impl(const void* XXH_RESTRICT input, size_t len, hash64_t seed, const void* XXH_RESTRICT secret = default_secret, size_t secretSize = secret_default_size)
 		{
-			alignas(8) uint8_t custom_secret[secret_default_size];
+
+			alignas(64) uint8_t custom_secret[secret_default_size];
+
 			const void* short_secret = secret;
 		
 			if (seed != 0)
 			{
 				init_custom_secret(custom_secret, seed);
-				secret = custom_secret;
-				secretSize = secret_default_size;
 				short_secret = default_secret;
 			}
 
@@ -1485,8 +1612,35 @@ namespace xxh
 			}
 			else
 			{
-				return hash_long_internal<N>(static_cast<const uint8_t*>(input), len, static_cast<const uint8_t*>(secret), secretSize);
+				return hash_long_internal<N>(static_cast<const uint8_t*>(input), len, static_cast<const uint8_t*>(((seed == 0) ? secret : ((secret == default_secret) ? custom_secret : secret))), ((seed == 0) ? secretSize : ((secret == default_secret) ? secret_default_size : secretSize)));
 			}
+		}
+
+		XXH_NO_INLINE void generate_secret(void* secret_buffer, size_t secret_size, const void* custom_seed, size_t seed_size)
+		{
+			if (seed_size == 0)
+			{
+				custom_seed = default_secret;
+				seed_size = secret_default_size;
+			}
+
+			size_t pos = 0;
+			while (pos < secret_size)
+			{
+				size_t const copy_len = std::min(secret_size - pos, seed_size);
+				memcpy((uint8_t*)secret_buffer + pos, custom_seed, copy_len);
+				pos += copy_len;
+			}
+
+			size_t const nbseg16 = secret_size / 16;
+			canonical128_t scrambled(xxhash3_impl<128>(custom_seed, seed_size, 0));
+			for (size_t n = 0; n < nbseg16; n++)
+			{
+				hash128_t const h128 = xxhash3_impl<128>(&scrambled, sizeof(scrambled), n);
+				combine_16((uint8_t*)secret_buffer + n * 16, h128);
+			}
+
+			combine_16((uint8_t*)secret_buffer + secret_size - 16, scrambled.get_hash());
 		}
 	}
 
@@ -1551,10 +1705,10 @@ namespace xxh
 	}
 
 	template <size_t bit_mode>
-	inline hash_t<bit_mode> xxhash3(const void* input, size_t len, const void* secret, size_t secretSize)
+	inline hash_t<bit_mode> xxhash3(const void* input, size_t len, const void* secret, size_t secretSize, uint64_t seed = 0)
 	{
 		static_assert(!(bit_mode != 128 && bit_mode != 64), "xxhash3 can only be used in 64 and 128 bit modes.");
-		return detail3::xxhash3_impl<bit_mode>(input, len, 0, secret, secretSize);
+		return detail3::xxhash3_impl<bit_mode>(input, len, seed, secret, secretSize);
 	}
 
 	template <size_t bit_mode, typename T>
@@ -1565,26 +1719,26 @@ namespace xxh
 	}
 
 	template <size_t bit_mode, typename T>
-	inline hash_t<bit_mode> xxhash3(const std::basic_string<T>& input, const void* secret, size_t secretSize)
+	inline hash_t<bit_mode> xxhash3(const std::basic_string<T>& input, const void* secret, size_t secretSize, uint64_t seed = 0)
 	{
 		static_assert(!(bit_mode != 128 && bit_mode != 64), "xxhash3 can only be used in 64 and 128 bit modes.");
-		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(input.data()), input.length() * sizeof(T), 0, secret, secretSize);
-	}
-
-	template <size_t N, typename ContiguousIterator>
-	inline hash_t<N> xxhash3(ContiguousIterator begin, ContiguousIterator end, uint64_t seed = 0)
-	{
-		static_assert(!(N != 128 && N != 64), "xxhash3 can only be used in 64 and 128 bit modes.");
-		using T = typename std::decay_t<decltype(*end)>;
-		return detail3::xxhash3_impl<N>(static_cast<const void*>(&*begin), (end - begin) * sizeof(T), seed);
+		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(input.data()), input.length() * sizeof(T), seed, secret, secretSize);
 	}
 
 	template <size_t bit_mode, typename ContiguousIterator>
-	inline hash_t<bit_mode> xxhash3(ContiguousIterator begin, ContiguousIterator end, const void* secret, size_t secretSize)
+	inline hash_t<bit_mode> xxhash3(ContiguousIterator begin, ContiguousIterator end, uint64_t seed = 0)
 	{
 		static_assert(!(bit_mode != 128 && bit_mode != 64), "xxhash3 can only be used in 64 and 128 bit modes.");
 		using T = typename std::decay_t<decltype(*end)>;
-		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(&*begin), (end - begin) * sizeof(T), 0, secret, secretSize);
+		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(&*begin), (end - begin) * sizeof(T), seed);
+	}
+
+	template <size_t bit_mode, typename ContiguousIterator>
+	inline hash_t<bit_mode> xxhash3(ContiguousIterator begin, ContiguousIterator end, const void* secret, size_t secretSize, uint64_t seed = 0)
+	{
+		static_assert(!(bit_mode != 128 && bit_mode != 64), "xxhash3 can only be used in 64 and 128 bit modes.");
+		using T = typename std::decay_t<decltype(*end)>;
+		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(&*begin), (end - begin) * sizeof(T), seed, secret, secretSize);
 	}
 
 	template <size_t bit_mode, typename T>
@@ -1595,10 +1749,10 @@ namespace xxh
 	}
 
 	template <size_t bit_mode, typename T>
-	inline hash_t<bit_mode> xxhash3(const std::vector<T>& input, const void* secret, size_t secretSize)
+	inline hash_t<bit_mode> xxhash3(const std::vector<T>& input, const void* secret, size_t secretSize, uint64_t seed = 0)
 	{
 		static_assert(!(bit_mode != 128 && bit_mode != 64), "xxhash3 can only be used in 64 and 128 bit modes.");
-		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(input.data()), input.size() * sizeof(T), 0, secret, secretSize);
+		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(input.data()), input.size() * sizeof(T), seed, secret, secretSize);
 	}
 
 	template <size_t bit_mode, typename T, size_t AN>
@@ -1609,10 +1763,10 @@ namespace xxh
 	}
 
 	template <size_t bit_mode, typename T, size_t AN>
-	inline hash_t<bit_mode> xxhash3(const std::array<T, AN>& input, const void* secret, size_t secretSize)
+	inline hash_t<bit_mode> xxhash3(const std::array<T, AN>& input, const void* secret, size_t secretSize, uint64_t seed = 0)
 	{
 		static_assert(!(bit_mode != 128 && bit_mode != 64), "xxhash3 can only be used in 64 and 128 bit modes.");
-		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(input.data()), AN * sizeof(T), 0, secret, secretSize);
+		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(input.data()), AN * sizeof(T), seed, secret, secretSize);
 	}
 
 	template <size_t bit_mode, typename T>
@@ -1623,10 +1777,58 @@ namespace xxh
 	}
 
 	template <size_t bit_mode, typename T>
-	inline hash_t<bit_mode> xxhash3(const std::initializer_list<T>& input, const void* secret, size_t secretSize)
+	inline hash_t<bit_mode> xxhash3(const std::initializer_list<T>& input, const void* secret, size_t secretSize, uint64_t seed = 0)
 	{
 		static_assert(!(bit_mode != 128 && bit_mode != 64), "xxhash3 can only be used in 64 and 128 bit modes.");
-		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(input.begin()), input.size() * sizeof(T), 0, secret, secretSize);
+		return detail3::xxhash3_impl<bit_mode>(static_cast<const void*>(input.begin()), input.size() * sizeof(T), seed, secret, secretSize);
+	}
+
+
+	/* *************************************
+	*  Secret Generation Functions
+	***************************************/
+	 
+	inline void generate_secret(void* secret_buffer, size_t secret_size, const void* custom_seed = detail3::default_secret, size_t seed_length = 0)
+	{
+		detail3::generate_secret(secret_buffer, secret_size, custom_seed, seed_length);
+	}
+
+	template <typename T, size_t AN>
+	inline void generate_secret(void* secret_buffer, size_t secret_size, const std::array<T, AN>& custom_seed)
+	{
+		detail3::generate_secret(secret_buffer, secret_size, static_cast<const void*>(custom_seed.data()), AN * sizeof(T));
+	}
+
+	template <typename T>
+	inline void generate_secret(void* secret_buffer, size_t secret_size, const std::initializer_list<T>& custom_seed)
+	{
+		detail3::generate_secret(secret_buffer, secret_size, static_cast<const void*>(custom_seed.begin()), custom_seed.size() * sizeof(T));
+	}
+
+	template <typename T>
+	inline void generate_secret(void* secret_buffer, size_t secret_size, const std::vector<T>& custom_seed)
+	{
+		detail3::generate_secret(secret_buffer, secret_size, static_cast<const void*>(custom_seed.data()), custom_seed.size() * sizeof(T));
+	}
+
+	template <typename T>
+	inline void generate_secret(void* secret_buffer, size_t secret_size, const std::basic_string<T>& custom_seed)
+	{
+		detail3::generate_secret(secret_buffer, secret_size, static_cast<const void*>(custom_seed.data()), custom_seed.length() * sizeof(T));
+	}
+
+	template <typename ContiguousIterator>
+	inline void generate_secret(void* secret_buffer, size_t secret_size, ContiguousIterator begin, ContiguousIterator end)
+	{
+		using T = typename std::decay_t<decltype(*end)>;
+		detail3::generate_secret(secret_buffer, secret_size, static_cast<const void*>(&*begin), (end - begin) * sizeof(T));
+	}
+
+	inline void generate_secret_from_seed(void* secret_buffer, uint64_t seed = 0)
+	{
+		alignas(64) uint8_t custom_secret[detail3::secret_default_size];
+		detail3::init_custom_secret(custom_secret, seed);
+		memcpy(secret_buffer, custom_secret, detail3::secret_default_size);
 	}
 
 
@@ -1804,7 +2006,6 @@ namespace xxh
 	{   
 		constexpr static int internal_buffer_size = 256;
 		constexpr static int internal_buffer_stripes = (internal_buffer_size / detail3::stripe_len);
-		constexpr static detail3::acc_width accWidth = (bit_mode == 64) ? detail3::acc_width::acc_64bits : detail3::acc_width::acc_128bits;
 	
 		alignas(64) uint64_t acc[8];
 		alignas(64) uint8_t customSecret[detail3::secret_default_size];  /* used to store a custom secret generated from the seed. Makes state larger. Design might change */
@@ -1817,24 +2018,25 @@ namespace xxh
 		uint32_t reserved32_2 = 0;
 		uint64_t totalLen = 0;
 		uint64_t seed = 0;
+		bool useSeed = false;
 		uint64_t reserved64 = 0;
 		const uint8_t* secret = nullptr;    /* note : there is some padding after, due to alignment on 64 bytes */
 
 
-		void consume_stripes(uint64_t* acc, uint32_t& nbStripesSoFar, size_t totalStripes, const uint8_t* input, detail3::acc_width accWidth)
+		void consume_stripes(uint64_t* acc, uint32_t& nbStripesSoFar, size_t totalStripes, const uint8_t* input)
 		{
 			if (nbStripesPerBlock - nbStripesSoFar <= totalStripes) /* need a scrambling operation */
 			{			
 				size_t const nbStripes = nbStripesPerBlock - nbStripesSoFar;
 
-				detail3::accumulate(acc, input, secret + (nbStripesSoFar * detail3::secret_consume_rate), nbStripes, accWidth);
-				detail3::scramble_acc<detail3::vector_mode>(acc, secret + secretLimit);
-				detail3::accumulate(acc, input + nbStripes * detail3::stripe_len, secret, totalStripes - nbStripes, accWidth);
+				detail3::accumulate(acc, input, secret + (nbStripesSoFar * detail3::secret_consume_rate), nbStripes);
+				detail3::scramble_acc(acc, secret + secretLimit);
+				detail3::accumulate(acc, input + nbStripes * detail3::stripe_len, secret, totalStripes - nbStripes);
 				nbStripesSoFar = (uint32_t)(totalStripes - nbStripes);
 			}
 			else 
 			{
-				detail3::accumulate(acc, input, secret + (nbStripesSoFar * detail3::secret_consume_rate), totalStripes, accWidth);
+				detail3::accumulate(acc, input, secret + (nbStripesSoFar * detail3::secret_consume_rate), totalStripes);
 				nbStripesSoFar += (uint32_t)totalStripes;
 			}
 		}
@@ -1860,7 +2062,7 @@ namespace xxh
 
 				memcpy(buffer + bufferedSize, input, loadSize);
 				input += loadSize;
-				consume_stripes(acc, nbStripesSoFar, internal_buffer_stripes, buffer, accWidth);
+				consume_stripes(acc, nbStripesSoFar, internal_buffer_stripes, buffer);
 				bufferedSize = 0;
 			}
 
@@ -1871,10 +2073,12 @@ namespace xxh
 
 				do 
 				{
-					consume_stripes(acc, nbStripesSoFar, internal_buffer_stripes, input, accWidth);
+					consume_stripes(acc, nbStripesSoFar, internal_buffer_stripes, input);
 					input += internal_buffer_size;
 				} 
-				while (input <= limit);
+				while (input < limit);
+
+				memcpy(buffer + sizeof(buffer) - detail3::stripe_len, input - detail3::stripe_len, detail3::stripe_len);
 			}
 
 			if (input < bEnd) 
@@ -1884,33 +2088,40 @@ namespace xxh
 			}
 		}
 
-		void digest_long(uint64_t* acc_, detail3::acc_width accWidth)
+		void digest_long(uint64_t* acc_)
 		{
 			memcpy(acc_, acc, sizeof(acc));  /* digest locally, state remains unaltered, and can continue ingesting more input afterwards */
 
 			if (bufferedSize >= detail3::stripe_len) 
 			{
-				size_t const totalNbStripes = bufferedSize / detail3::stripe_len;
+				size_t const totalNbStripes = (bufferedSize - 1) / detail3::stripe_len;
 				uint32_t nbStripesSoFar = this->nbStripesSoFar;
 
-				consume_stripes(acc_, nbStripesSoFar, totalNbStripes, buffer, accWidth);
+				consume_stripes(acc_, nbStripesSoFar, totalNbStripes, buffer);
 
-				if (bufferedSize % detail3::stripe_len) 
-				{  /* one last partial stripe */
-					detail3::accumulate_512<detail3::vector_mode>(acc_, buffer + bufferedSize - detail3::stripe_len, secret + secretLimit - detail3::secret_lastacc_start, accWidth);
-				}
+				/* one last partial stripe */
+				detail3::accumulate_512(acc_, buffer + bufferedSize - detail3::stripe_len, secret + secretLimit - detail3::secret_lastacc_start);
 			}
 			else 
 			{  /* bufferedSize < STRIPE_LEN */
-				if (bufferedSize > 0) 
-				{ /* one last stripe */
-					uint8_t lastStripe[detail3::stripe_len];
-					size_t const catchupSize = detail3::stripe_len - bufferedSize;
-					memcpy(lastStripe, buffer + sizeof(buffer) - catchupSize, catchupSize);
-					memcpy(lastStripe + catchupSize, buffer, bufferedSize);
-					detail3::accumulate_512<detail3::vector_mode>(acc_, lastStripe, secret + secretLimit - detail3::secret_lastacc_start, accWidth);
-				}
+				/* one last stripe */
+				uint8_t lastStripe[detail3::stripe_len];
+				size_t const catchupSize = detail3::stripe_len - bufferedSize;
+				memcpy(lastStripe, buffer + sizeof(buffer) - catchupSize, catchupSize);
+				memcpy(lastStripe + catchupSize, buffer, bufferedSize);
+				detail3::accumulate_512(acc_, lastStripe, secret + secretLimit - detail3::secret_lastacc_start);
 			}
+		}
+
+		void reset_internal(uint64_t seed_reset, const void* secret_reset, size_t secret_size)
+		{
+			memset(this, 0, sizeof(*this));
+			memcpy(acc, detail3::init_acc.data(), sizeof(detail3::init_acc));
+			seed = seed_reset;
+			useSeed = (seed != 0);
+			secret = (const uint8_t*)secret_reset;
+			secretLimit = (uint32_t)(secret_size - detail3::stripe_len);
+			nbStripesPerBlock = secretLimit / detail3::secret_consume_rate;
 		}
 
 	public:
@@ -1926,14 +2137,18 @@ namespace xxh
 			reset(seed);
 		}
 
-		hash3_state_t(const void* secret, size_t secretSize)
+		hash3_state_t(const void* secret, size_t secretSize, uint64_t seed = 0)
 		{
 			static_assert(!(bit_mode != 128 && bit_mode != 64), "xxhash3 streaming can only be used in 64 and 128 bit modes.");
-			reset(secret, secretSize);
+			reset(secret, secretSize, seed);
 		}
 
 		void reset(uint64_t seed = 0)
 		{ 
+			reset_internal(seed, detail3::default_secret, detail3::secret_default_size);
+			detail3::init_custom_secret(customSecret, seed);
+			secret = customSecret;
+			/*
 			memset(this, 0, sizeof(*this));
 			memcpy(acc, detail3::init_acc.data(), sizeof(detail3::init_acc));
 			(*this).seed = seed;
@@ -1949,18 +2164,22 @@ namespace xxh
 			}
 
 			secretLimit = (uint32_t)(detail3::secret_default_size - detail3::stripe_len);
-			nbStripesPerBlock = secretLimit / detail3::secret_consume_rate;
+			nbStripesPerBlock = secretLimit / detail3::secret_consume_rate;*/
 		}
 
-		void reset(const void* secret, size_t secretSize)
+		void reset(const void* secret, size_t secretSize, uint64_t seed = 0)
 		{
+			reset_internal(seed, secret, secretSize);
+			useSeed = true;
+			/*
+
 			memset(this, 0, sizeof(*this));
 			memcpy(acc, detail3::init_acc.data(), sizeof(detail3::init_acc));
 			seed = 0;
 
 			(*this).secret = (const uint8_t*)secret;
 			secretLimit = (uint32_t)(secretSize - detail3::stripe_len);
-			nbStripesPerBlock = secretLimit / detail3::secret_consume_rate;
+			nbStripesPerBlock = secretLimit / detail3::secret_consume_rate;*/
 		}
 
 		void update(const void* input, size_t len)
@@ -2003,9 +2222,9 @@ namespace xxh
 		{	
 			if (totalLen > detail3::midsize_max) 
 			{
-				alignas(detail3::acc_align) hash64_t acc[detail3::acc_nb];
+				alignas(128) hash64_t acc[detail3::acc_nb];
 				
-				digest_long(acc, accWidth);
+				digest_long(acc);
 
 				if constexpr (bit_mode == 64)
 				{
@@ -2028,55 +2247,4 @@ namespace xxh
 
 	using hash3_state64_t = hash3_state_t<64>;
 	using hash3_state128_t = hash3_state_t<128>;
-
-
-	/* *************************************
-	*  Canonical represenation
-	***************************************/
-
-	template <size_t bit_mode>
-	struct canonical_t
-	{
-		std::array<uint8_t, bit_mode / 8> digest {0};
-
-		canonical_t(hash_t<bit_mode> hash)
-		{
-			if constexpr (bit_mode < 128)
-			{
-				if (mem_ops::is_little_endian()) 
-				{ 
-					hash = bit_ops::swap<bit_mode>(hash); 
-				}
-
-				memcpy(digest.data(), &hash, sizeof(canonical_t<bit_mode>));
-			}
-			else
-			{
-				if (mem_ops::is_little_endian()) 
-				{ 
-					hash.low64 = bit_ops::swap<64>(hash.low64); 
-					hash.high64 = bit_ops::swap<64>(hash.high64);
-				}
-
-				memcpy(digest.data(), &hash.high64, sizeof(hash.high64));
-				memcpy(digest.data() + sizeof(hash.high64), &hash.low64, sizeof(hash.low64));
-			}
-		}
-
-		hash_t<bit_mode> get_hash() const
-		{
-			if constexpr (bit_mode < 128)
-			{
-				return mem_ops::readBE<bit_mode>(&digest);
-			}
-			else
-			{
-				return { mem_ops::readBE<64>(&digest[8]), mem_ops::readBE<64>(&digest) };
-			}
-		}
-	};
-
-	using canonical32_t = canonical_t<32>;
-	using canonical64_t = canonical_t<64>;
-	using canonical128_t = canonical_t<128>;
 }
