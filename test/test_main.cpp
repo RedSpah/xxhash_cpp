@@ -827,3 +827,16 @@ TEST_CASE("Printing results for inter-platform comparison", "[platform]")
 	RAW_PRINT(xxh::xxhash3<128>(alternating_data2, 32, 65536));
 }
 
+TEST_CASE("Checking c++ assignment operator","[c++ compliance]")
+{
+  xxh::hash_state_t<64> s1;
+  s1.update(std::string("foo"));
+  
+  xxh::hash_state_t<64> s2;
+  s2=s1;
+
+  s1.update(std::string("bar"));
+  s2.update(std::string("bar"));
+
+  REQUIRE(s1.digest() == s2.digest());
+}

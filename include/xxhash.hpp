@@ -1938,11 +1938,6 @@ namespace xxh
 			v4 = seed - detail::PRIME<bit_mode>(1);
 		};
 
-		hash_state_t operator=(hash_state_t<bit_mode>& other)
-		{
-			memcpy(this, &other, sizeof(hash_state_t<bit_mode>));
-		}
-
 		void reset(uint_t<bit_mode> seed = 0)
 		{
 			memset(this, 0, sizeof(hash_state_t<bit_mode>));
