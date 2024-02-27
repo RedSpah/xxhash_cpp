@@ -867,7 +867,7 @@ namespace xxh
 		static_assert(!(bit_mode != 128 && bit_mode != 64 && bit_mode != 32), "Canonical form can only be obtained from 32, 64 and 128 bit hashes.");
 		canonical_t<bit_mode> canon(hash);
 		hash_t<bit_mode> res;
-		memcpy(&res, &canon, bit_mode / 4);
+		memcpy(&res, &canon, bit_mode / 8);
 
 		return res;
 	}
