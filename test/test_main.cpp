@@ -19,9 +19,9 @@
 #define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
 
-void to_string(uint64_t l, uint64_t h) {}
+void to_string(uint64_t, uint64_t) {}
 
-void to_string(xxh::uint128_t h128) {}
+void to_string(xxh::uint128_t) {}
 
 template <typename T>
 std::string byte_print(T val)
