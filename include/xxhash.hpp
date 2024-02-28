@@ -9,8 +9,8 @@
 /*
 xxHash - Extremely Fast Hash algorithm
 Header File
-Copyright (C) 2012-2022, Yann Collet.
-Copyright (C) 2017-2022, Red Gavin.
+Copyright (C) 2012-2024, Yann Collet.
+Copyright (C) 2017-2024, Red Gavin.
 All rights reserved.
 
 BSD 2-Clause License (http://www.opensource.org/licenses/bsd-license.php)
@@ -1853,14 +1853,14 @@ namespace xxh
 			total_len += length;
 
 			if (memsize + length < (bit_mode / 2))
-			{   /* fill in tmp buffer */
+			{	/* fill in tmp buffer */
 				memcpy(reinterpret_cast<uint8_t*>(mem.data()) + memsize, input, length);
 				memsize += static_cast<uint32_t>(length);
 				return;
 			}
 
 			if (memsize > 0)
-			{   /* some data left from previous update */
+			{	/* some data left from previous update */
 				memcpy(reinterpret_cast<uint8_t*>(mem.data()) + memsize, input, (bit_mode / 2) - memsize);
 
 				const uint_t<bit_mode>* ptr = mem.data();
@@ -2004,7 +2004,7 @@ namespace xxh
 		constexpr static int internal_buffer_stripes = (internal_buffer_size / detail3::stripe_len);
 	
 		alignas(64) uint64_t acc[8];
-		alignas(64) uint8_t customSecret[detail3::secret_default_size];  /* used to store a custom secret generated from the seed. Makes state larger. Design might change */
+		alignas(64) uint8_t customSecret[detail3::secret_default_size];	/* used to store a custom secret generated from the seed. Makes state larger. Design might change */
 		alignas(64) uint8_t buffer[internal_buffer_size];
 		uint32_t bufferedSize = 0;
 		uint32_t nbStripesPerBlock = 0;
@@ -2016,12 +2016,12 @@ namespace xxh
 		uint64_t seed = 0;
 		bool useSeed = false;
 		uint64_t reserved64 = 0;
-		const uint8_t* secret = nullptr;    /* note : there is some padding after, due to alignment on 64 bytes */
+		const uint8_t* secret = nullptr;	/* note : there is some padding after, due to alignment on 64 bytes */
 
 
 		void consume_stripes(uint64_t* acc, uint32_t& nbStripesSoFar, size_t totalStripes, const uint8_t* input)
 		{
-			if (nbStripesPerBlock - nbStripesSoFar <= totalStripes) /* need a scrambling operation */
+			if (nbStripesPerBlock - nbStripesSoFar <= totalStripes)	/* need a scrambling operation */
 			{			
 				size_t const nbStripes = nbStripesPerBlock - nbStripesSoFar;
 
@@ -2045,7 +2045,7 @@ namespace xxh
 			totalLen += len;
 
 			if (bufferedSize + len <= internal_buffer_size) 
-			{  /* fill in tmp buffer */
+			{	/* fill in tmp buffer */
 				memcpy(buffer + bufferedSize, input, len);
 				bufferedSize += (uint32_t)len;
 				return;
@@ -2053,7 +2053,7 @@ namespace xxh
 			/* input now > XXH3_INTERNALBUFFER_SIZE */
 
 			if (bufferedSize > 0) 
-			{   /* some input within internal buffer: fill then consume it */
+			{	/* some input within internal buffer: fill then consume it */
 				size_t const loadSize = internal_buffer_size - bufferedSize;
 
 				memcpy(buffer + bufferedSize, input, loadSize);
@@ -2078,7 +2078,7 @@ namespace xxh
 			}
 
 			if (input < bEnd) 
-			{ /* some remaining input input : buffer it */
+			{	/* some remaining input input : buffer it */
 				memcpy(buffer, input, (size_t)(bEnd - input));
 				bufferedSize = (uint32_t)(bEnd - input);
 			}
@@ -2086,7 +2086,7 @@ namespace xxh
 
 		void digest_long(uint64_t* acc_)
 		{
-			memcpy(acc_, acc, sizeof(acc));  /* digest locally, state remains unaltered, and can continue ingesting more input afterwards */
+			memcpy(acc_, acc, sizeof(acc));	/* digest locally, state remains unaltered, and can continue ingesting more input afterwards */
 
 			if (bufferedSize >= detail3::stripe_len) 
 			{
@@ -2099,7 +2099,7 @@ namespace xxh
 				detail3::accumulate_512(acc_, buffer + bufferedSize - detail3::stripe_len, secret + secretLimit - detail3::secret_lastacc_start);
 			}
 			else 
-			{  /* bufferedSize < STRIPE_LEN */
+			{	/* bufferedSize < STRIPE_LEN */
 				/* one last stripe */
 				uint8_t lastStripe[detail3::stripe_len];
 				size_t const catchupSize = detail3::stripe_len - bufferedSize;
@@ -2144,38 +2144,12 @@ namespace xxh
 			reset_internal(seed, detail3::default_secret, detail3::secret_default_size);
 			detail3::init_custom_secret(customSecret, seed);
 			secret = customSecret;
-			/*
-			memset(this, 0, sizeof(*this));
-			memcpy(acc, detail3::init_acc.data(), sizeof(detail3::init_acc));
-			(*this).seed = seed;
-
-			if (seed == 0)
-			{
-				secret = detail3::default_secret;
-			}
-			else
-			{
-				detail3::init_custom_secret(customSecret, seed);
-				secret = customSecret;
-			}
-
-			secretLimit = (uint32_t)(detail3::secret_default_size - detail3::stripe_len);
-			nbStripesPerBlock = secretLimit / detail3::secret_consume_rate;*/
 		}
 
 		void reset(const void* secret, size_t secretSize, uint64_t seed = 0)
 		{
 			reset_internal(seed, secret, secretSize);
 			useSeed = true;
-			/*
-
-			memset(this, 0, sizeof(*this));
-			memcpy(acc, detail3::init_acc.data(), sizeof(detail3::init_acc));
-			seed = 0;
-
-			(*this).secret = (const uint8_t*)secret;
-			secretLimit = (uint32_t)(secretSize - detail3::stripe_len);
-			nbStripesPerBlock = secretLimit / detail3::secret_consume_rate;*/
 		}
 
 		void update(const void* input, size_t len)
