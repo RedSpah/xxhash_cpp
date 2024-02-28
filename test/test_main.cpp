@@ -113,7 +113,6 @@ int main(int argc, char** argv)
 {
 	// Dumb but it works: have the tests run beforehand without Catch so that gdb can catch segfaults, and then repeat afterwards with catch for pretty results
 
-
 	std::cout << "xxhash_cpp compatibility testing, vectorization setting: " << static_cast<int32_t>(xxh::detail3::vector_mode) << std::endl << std::endl; 
 
 	std::string test = "test";
@@ -280,6 +279,15 @@ int main(int argc, char** argv)
 		XXH64_canonicalFromHash(&canonical3_64_c_secmin, XXH3_64bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
 		XXH128_canonicalFromHash(&canonical3_128_c_secmin, XXH3_128bits_withSecret(input_buffer.data(), test_buf_size, secret_min_size.data(), secret_min_size.size()));
 
+		xxh::hash_state_t<64> hash_state_cmp_test1;
+		xxh::hash_state_t<64> hash_state_cmp_test2;
+
+		hash_state_cmp_test1.update(std::string("foo"));
+
+		hash_state_cmp_test2 = hash_state_cmp_test1;
+
+		hash_state_cmp_test1.update(std::string("bar"));
+		hash_state_cmp_test2.update(std::string("bar"));
 
 		DUMB_REQUIRE(XXH32(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<32>(input_buffer, seed));
 		DUMB_REQUIRE(XXH64(input_buffer.data(), test_buf_size, seed) == xxh::xxhash<64>(input_buffer, seed));
@@ -334,6 +342,7 @@ int main(int argc, char** argv)
 		DUMB_REQUIRE(XXH128_hashFromCanonical(&canonical3_128_c_secmin).high64 == canonical3_128_cpp_secmin.get_hash().high64);
 		DUMB_REQUIRE(XXH128_hashFromCanonical(&canonical3_128_c_secmin).low64 == canonical3_128_cpp_secmin.get_hash().low64);
 
+		DUMB_REQUIRE(hash_state_cmp_test1.digest() == hash_state_cmp_test2.digest());
 	}
 
 	std::cout << "Dumb test results: " << res << " / " << all << "  (" << ((float)res * 100) / (float)all << ")\n";
@@ -827,16 +836,17 @@ TEST_CASE("Printing results for inter-platform comparison", "[platform]")
 	RAW_PRINT(xxh::xxhash3<128>(alternating_data2, 32, 65536));
 }
 
-TEST_CASE("Checking c++ assignment operator","[c++ compliance]")
+TEST_CASE("Testing hash_state_t assignment operator","[c++ compliance]")
 {
-  xxh::hash_state_t<64> s1;
-  s1.update(std::string("foo"));
-  
-  xxh::hash_state_t<64> s2;
-  s2=s1;
+	xxh::hash_state_t<64> hash_state_cmp_test1;
+	xxh::hash_state_t<64> hash_state_cmp_test2;
 
-  s1.update(std::string("bar"));
-  s2.update(std::string("bar"));
+	hash_state_cmp_test1.update(std::string("foo"));
 
-  REQUIRE(s1.digest() == s2.digest());
+	hash_state_cmp_test2 = hash_state_cmp_test1;
+
+	hash_state_cmp_test1.update(std::string("bar"));
+	hash_state_cmp_test2.update(std::string("bar"));
+
+    REQUIRE(hash_state_cmp_test1.digest() == hash_state_cmp_test2.digest());
 }
