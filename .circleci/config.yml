@@ -12,8 +12,8 @@ jobs:
     executor: win/server-2019
     steps: 
       - checkout
-      - run: choco install mingw
-      - run: choco install cmake
+      - run: choco install mingw -y
+      - run: choco install cmake -y
       - run: mkdir build
       - run: cd build; $env:Path+=";$Env:ProgramFiles\CMake\bin";  cmake -DCMAKE_BUILD_TYPE=Release -DXXH_CPP_USE_AVX2=ON ..; cmake --build . --config Release; ctest --output-on-failure -C Release 
 
