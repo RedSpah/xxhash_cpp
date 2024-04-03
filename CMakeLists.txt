@@ -16,6 +16,15 @@ target_include_directories(${PROJECT_NAME} INTERFACE
 
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 
+include(FetchContent)
+FetchContent_Declare(
+    sse2neon
+    GIT_REPOSITORY https://github.com/DLTcollab/sse2neon.git
+    GIT_TAG        v1.7.0
+)
+FetchContent_MakeAvailable(sse2neon)
+add_dependencies(${PROJECT_NAME} PUBLIC sse2neon)
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(CTest)
 endif()
