@@ -42,7 +42,7 @@ You can contact the author at :
 /* Intrinsics
 * Sadly has to be included in the global namespace or literally everything breaks
 */
-#if (defined(__arm64__) && defined(__APPLE__))
+#if (defined(__ARM_NEON) && defined(__APPLE__))
   #include "sse2neon.h"
 #else
 #include <immintrin.h>
@@ -194,7 +194,7 @@ namespace xxh
 #elif defined(__GNUC__)  /* Clang / GCC */
 #	define XXH_FORCE_INLINE static inline __attribute__((always_inline))
 #	define XXH_NO_INLINE static __attribute__((noinline))
-# if (defined(__arm64__) && defined(__APPLE__))
+#if (defined(__ARM_NEON) && defined(__APPLE__))
 #  include "sse2neon.h"
 # else
 #  include <immintrin.h>
@@ -741,7 +741,7 @@ namespace xxh
 		XXH_FORCE_INLINE vec_t<N> set1(int64_t a)
 		{
 			
-#if (defined(__arm64__) && defined(__APPLE__))
+#if (defined(__ARM_NEON) && defined(__APPLE__))
       static_assert(!(N != 128 && N != 64), "Invalid argument passed to xxh::vec_ops::set1");
 #else
 			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::set1");
