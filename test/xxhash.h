@@ -3019,6 +3019,7 @@ extern "C" {
    || defined(_M_ARM64)     || defined(_M_ARM64EC)
 #    define inline __inline__  /* circumvent a clang bug */
 #    include <arm_neon.h>
+#    include "sse2neon.h"
 #    undef inline
 #  elif defined(__AVX2__)
 #    include <immintrin.h>
