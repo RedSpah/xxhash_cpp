@@ -10,20 +10,20 @@ include(GNUInstallDirs)
 
 add_library(${PROJECT_NAME} INTERFACE)
 
-target_include_directories(${PROJECT_NAME} INTERFACE
-	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>  
-	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>)
-
 target_compile_features(${PROJECT_NAME} INTERFACE cxx_std_17)
 
-include(FetchContent)
-FetchContent_Declare(
-    sse2neon
-    GIT_REPOSITORY https://github.com/DLTcollab/sse2neon.git
-    GIT_TAG        v1.7.0
-)
-FetchContent_MakeAvailable(sse2neon)
-add_dependencies(${PROJECT_NAME} PUBLIC sse2neon)
+
+target_include_directories(${PROJECT_NAME} INTERFACE
+	$<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>  
+	$<INSTALL_INTERFACE:${CMAKE_INSTALL_INCLUDEDIR}>
+	)
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "arm64" AND APPLE)
+	find_path(SSE2NEON_HEADER sse2neon.h PATHS ${CMAKE_SOURCE_DIR}/../sse2neon)
+  target_include_directories(${PROJECT_NAME} INTERFACE
+    ${SSE2NEON_HEADER}
+	  )
+endif()
 
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
   include(CTest)
