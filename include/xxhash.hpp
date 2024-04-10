@@ -42,7 +42,11 @@ You can contact the author at :
 /* Intrinsics
 * Sadly has to be included in the global namespace or literally everything breaks
 */
+#if (defined(__ARM_NEON) && defined(__APPLE__))
+#include "sse2neon.h"
+#else
 #include <immintrin.h>
+#endif
 
 namespace xxh
 {
@@ -191,7 +195,11 @@ namespace xxh
 #elif defined(__GNUC__)  /* Clang / GCC */
 #	define XXH_FORCE_INLINE static inline __attribute__((always_inline))
 #	define XXH_NO_INLINE static __attribute__((noinline))
-#	include <mmintrin.h>
+#if (defined(__ARM_NEON) && defined(__APPLE__))
+#  include "sse2neon.h"
+# else
+#  include <immintrin.h>
+# endif
 #else
 #	define XXH_FORCE_INLINE static inline
 #	define XXH_NO_INLINE static
@@ -733,13 +741,11 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> set1(int64_t a)
 		{
+			
+#if (defined(__ARM_NEON) && defined(__APPLE__))
+      static_assert(!(N != 128 && N != 64), "Invalid argument passed to xxh::vec_ops::set1");
+#else
 			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::set1");
-
-			if constexpr (N == 128)
-			{
-				return _mm_set1_epi32(static_cast<int>(a));
-			}
-
 			if constexpr (N == 256)
 			{
 				return _mm256_set1_epi32(static_cast<int>(a));
@@ -748,6 +754,12 @@ namespace xxh
 			if constexpr (N == 512)
 			{
 				return _mm512_set1_epi32(static_cast<int>(a));
+      }
+#endif
+      
+			if constexpr (N == 128)
+			{
+				return _mm_set1_epi32(static_cast<int>(a));
 			}
 
 			if constexpr (N == 64)

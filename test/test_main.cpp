@@ -754,8 +754,8 @@ TEST_CASE("Results are the same as the original implementation for large, random
 
 		std::vector<uint8_t> secret_buffer_c;
 		std::vector<uint8_t> secret_buffer_cpp;
-		secret_buffer_c.resize(std::max(xxh::detail3::secret_default_size, i));
-		secret_buffer_cpp.resize(std::max(xxh::detail3::secret_default_size, i));
+		secret_buffer_c.resize(std::max(static_cast<size_t>(xxh::detail3::secret_default_size), i));
+		secret_buffer_cpp.resize(std::max(static_cast<size_t>(xxh::detail3::secret_default_size), i));
 
 		std::vector<uint8_t> secret_seed_buffer_c;
 		std::vector<uint8_t> secret_seed_buffer_cpp;
