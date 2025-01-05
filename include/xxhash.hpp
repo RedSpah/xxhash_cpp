@@ -710,17 +710,17 @@ namespace xxh
 
 			if constexpr (N == 128)
 			{
-				return _mm_shuffle_epi32(a, _MM_SHUFFLE(S1, S2, S3, S4));
+				return _mm_shuffle_epi32(a, static_cast<_MM_PERM_ENUM>(_MM_SHUFFLE(S1, S2, S3, S4)));
 			}
 
 			if constexpr (N == 256)
 			{
-				return _mm256_shuffle_epi32(a, _MM_SHUFFLE(S1, S2, S3, S4));
+				return _mm256_shuffle_epi32(a, static_cast<_MM_PERM_ENUM>(_MM_SHUFFLE(S1, S2, S3, S4)));
 			}
 
 			if constexpr (N == 512)
 			{
-				return _mm512_shuffle_epi32(a, _MM_SHUFFLE(S1, S2, S3, S4));
+				return _mm512_shuffle_epi32(a, static_cast<_MM_PERM_ENUM>(_MM_SHUFFLE(S1, S2, S3, S4)));
 			}
 
 			if constexpr (N == 64)
