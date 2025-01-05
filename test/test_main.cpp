@@ -836,7 +836,7 @@ TEST_CASE("Printing results for inter-platform comparison", "[platform]")
 	RAW_PRINT(xxh::xxhash3<128>(alternating_data2, 32, 65536));
 }
 
-TEST_CASE("Testing hash_state_t assignment operator","[c++ compliance]")
+TEST_CASE("Checking c++ assignment operator","[c++ compliance]")
 {
 	xxh::hash_state_t<64> hash_state_cmp_test1;
 	xxh::hash_state_t<64> hash_state_cmp_test2;
