@@ -1877,22 +1877,16 @@ namespace xxh
 				memsize = 0;
 			}
 
-			if (p <= bEnd - (bit_mode / 2))
+			while (p + (bit_mode / 2) <= bEnd)
 			{
-				const uint8_t* const limit = bEnd - (bit_mode / 2);
-
-				do
-				{
-					v1 = detail::round<bit_mode>(v1, mem_ops::readLE<bit_mode>(p)); 
-					p += (bit_mode / 8);
-					v2 = detail::round<bit_mode>(v2, mem_ops::readLE<bit_mode>(p)); 
-					p += (bit_mode / 8);
-					v3 = detail::round<bit_mode>(v3, mem_ops::readLE<bit_mode>(p)); 
-					p += (bit_mode / 8);
-					v4 = detail::round<bit_mode>(v4, mem_ops::readLE<bit_mode>(p)); 
-					p += (bit_mode / 8);
-				} 
-				while (p <= limit);
+				v1 = detail::round<bit_mode>(v1, mem_ops::readLE<bit_mode>(p));
+				p += (bit_mode / 8);
+				v2 = detail::round<bit_mode>(v2, mem_ops::readLE<bit_mode>(p));
+				p += (bit_mode / 8);
+				v3 = detail::round<bit_mode>(v3, mem_ops::readLE<bit_mode>(p));
+				p += (bit_mode / 8);
+				v4 = detail::round<bit_mode>(v4, mem_ops::readLE<bit_mode>(p));
+				p += (bit_mode / 8);
 			}
 
 			if (p < bEnd)
