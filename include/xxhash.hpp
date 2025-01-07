@@ -248,6 +248,15 @@ namespace xxh
 #    define XXH_unlikely(x) (x)
 #endif
 
+		/* _MM_PERM_ENUM type
+		* Defines the type for the parameters of the shuffle function, in a way that works with -fpedantic while not breaking non-x86 compatibility.
+		*/
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_X64)
+		using mm_perm_enum_t = _MM_PERM_ENUM;
+#else
+		using mm_perm_enum_t = int;
+#endif
+
 
 		namespace bit_ops
 		{
@@ -718,17 +727,17 @@ namespace xxh
 
 			if constexpr (N == 128)
 			{
-				return _mm_shuffle_epi32(a, static_cast<_MM_PERM_ENUM>(_MM_SHUFFLE(S1, S2, S3, S4)));
+				return _mm_shuffle_epi32(a, static_cast<intrin::mm_perm_enum_t>(_MM_SHUFFLE(S1, S2, S3, S4)));
 			}
 
 			if constexpr (N == 256)
 			{
-				return _mm256_shuffle_epi32(a, static_cast<_MM_PERM_ENUM>(_MM_SHUFFLE(S1, S2, S3, S4)));
+				return _mm256_shuffle_epi32(a, static_cast<intrin::mm_perm_enum_t>(_MM_SHUFFLE(S1, S2, S3, S4)));
 			}
 
 			if constexpr (N == 512)
 			{
-				return _mm512_shuffle_epi32(a, static_cast<_MM_PERM_ENUM>(_MM_SHUFFLE(S1, S2, S3, S4)));
+				return _mm512_shuffle_epi32(a, static_cast<intrin::mm_perm_enum_t>(_MM_SHUFFLE(S1, S2, S3, S4)));
 			}
 
 			if constexpr (N == 64)
@@ -741,9 +750,9 @@ namespace xxh
 		template <size_t N>
 		XXH_FORCE_INLINE vec_t<N> set1(int64_t a)
 		{
-			
+
 #if (defined(__ARM_NEON) && defined(__APPLE__))
-      static_assert(!(N != 128 && N != 64), "Invalid argument passed to xxh::vec_ops::set1");
+			static_assert(!(N != 128 && N != 64), "Invalid argument passed to xxh::vec_ops::set1");
 #else
 			static_assert(!(N != 128 && N != 256 && N != 64 && N != 512), "Invalid argument passed to xxh::vec_ops::set1");
 			if constexpr (N == 256)
@@ -754,9 +763,9 @@ namespace xxh
 			if constexpr (N == 512)
 			{
 				return _mm512_set1_epi32(static_cast<int>(a));
-      }
+			}
 #endif
-      
+
 			if constexpr (N == 128)
 			{
 				return _mm_set1_epi32(static_cast<int>(a));
@@ -1891,13 +1900,13 @@ namespace xxh
 
 			while (p + (bit_mode / 2) <= bEnd)
 			{
-				v1 = detail::round<bit_mode>(v1, mem_ops::readLE<bit_mode>(p)); 
+				v1 = detail::round<bit_mode>(v1, mem_ops::readLE<bit_mode>(p));
 				p += (bit_mode / 8);
-				v2 = detail::round<bit_mode>(v2, mem_ops::readLE<bit_mode>(p)); 
+				v2 = detail::round<bit_mode>(v2, mem_ops::readLE<bit_mode>(p));
 				p += (bit_mode / 8);
-				v3 = detail::round<bit_mode>(v3, mem_ops::readLE<bit_mode>(p)); 
+				v3 = detail::round<bit_mode>(v3, mem_ops::readLE<bit_mode>(p));
 				p += (bit_mode / 8);
-				v4 = detail::round<bit_mode>(v4, mem_ops::readLE<bit_mode>(p)); 
+				v4 = detail::round<bit_mode>(v4, mem_ops::readLE<bit_mode>(p));
 				p += (bit_mode / 8);
 			}
 
